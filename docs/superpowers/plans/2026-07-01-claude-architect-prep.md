@@ -811,8 +811,9 @@ git commit -m "feat(domain): seedable exam composition (4 scenarios x N)"
 **Interfaces:**
 - Consumes: `Attempt`, `Letter`, `Question`, `QuestionResult`; `scaledScore`, `isPass`, `computeBreakdown`.
 - Produces: `useExamStore` with state `{ attempts, session }` and actions
-  `startSession(mode, questions)`, `answerCurrent(letter)`, `finishSession(): Attempt | null`, `resetSession()`;
-  selectors `bestScore(): number | null`.
+  `startSession(mode, questions)`, `answer(questionId, letter)`, `finishSession(): Attempt | null`, `resetSession()`;
+  selectors `bestScore(): number | null`. Answers are addressed by `questionId` (not a
+  running index) so re-selecting or out-of-order navigation can't corrupt the recorded answers.
 
 - [ ] **Step 1: Install + write the failing test**
 ```bash
@@ -840,19 +841,40 @@ beforeEach(() => {
 
 describe("exam store", () => {
   it("records an attempt with a scaled score on finish", () => {
-    const s = useExamStore.getState();
-    s.startSession("exam", [q("1"), q("2")]);
-    useExamStore.getState().answerCurrent("A"); // correct
-    useExamStore.getState().answerCurrent("B"); // wrong
+    useExamStore.getState().startSession("exam", [q("1"), q("2")]);
+    useExamStore.getState().answer("1", "A"); // correct
+    useExamStore.getState().answer("2", "B"); // wrong
     const attempt = useExamStore.getState().finishSession();
     expect(attempt?.results).toHaveLength(2);
     expect(attempt?.scaledScore).toBe(550); // 1/2 correct -> 100+450
     expect(useExamStore.getState().attempts).toHaveLength(1);
   });
+  it("scores unanswered questions as incorrect (chosen null)", () => {
+    useExamStore.getState().startSession("exam", [q("1"), q("2")]);
+    useExamStore.getState().answer("1", "A");
+    const attempt = useExamStore.getState().finishSession();
+    expect(attempt?.results[1]).toEqual({ questionId: "2", chosen: null, correct: false });
+  });
+  it("re-answering the same question overwrites, not corrupts", () => {
+    useExamStore.getState().startSession("exam", [q("1"), q("2")]);
+    useExamStore.getState().answer("1", "B"); // wrong first
+    useExamStore.getState().answer("1", "A"); // corrected
+    useExamStore.getState().answer("2", "A");
+    const attempt = useExamStore.getState().finishSession();
+    expect(attempt?.scaledScore).toBe(1000); // both correct
+  });
+  it("bestScore is the max exam score, null when no exams", () => {
+    expect(useExamStore.getState().bestScore()).toBeNull();
+    useExamStore.getState().startSession("exam", [q("1"), q("2")]);
+    useExamStore.getState().answer("1", "A");
+    useExamStore.getState().answer("2", "A");
+    useExamStore.getState().finishSession();
+    expect(useExamStore.getState().bestScore()).toBe(1000);
+  });
   it("caps stored history at 50", () => {
     for (let i = 0; i < 55; i++) {
       useExamStore.getState().startSession("practice", [q("x")]);
-      useExamStore.getState().answerCurrent("A");
+      useExamStore.getState().answer("x", "A");
       useExamStore.getState().finishSession();
     }
     expect(useExamStore.getState().attempts.length).toBe(50);
@@ -869,7 +891,7 @@ describe("exam store", () => {
 "use client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Attempt, Letter, Question, QuestionResult, ScenarioId } from "@/domain/types";
+import type { Attempt, Letter, Question, QuestionResult } from "@/domain/types";
 import { isPass, scaledScore } from "@/domain/scoring";
 
 const HISTORY_CAP = 50;
@@ -879,8 +901,7 @@ function newId(): string { counter += 1; return `a${Date.now()}-${counter}`; }
 interface Session {
   mode: "exam" | "practice";
   questions: Question[];
-  index: number;
-  answers: Record<string, Letter | null>;
+  answers: Record<string, Letter>;
   startedAt: number;
 }
 
@@ -888,8 +909,7 @@ interface ExamState {
   attempts: Attempt[];
   session: Session | null;
   startSession: (mode: "exam" | "practice", questions: Question[]) => void;
-  answerCurrent: (letter: Letter) => void;
-  goto: (index: number) => void;
+  answer: (questionId: string, letter: Letter) => void;
   finishSession: () => Attempt | null;
   resetSession: () => void;
   bestScore: () => number | null;
@@ -901,18 +921,12 @@ export const useExamStore = create<ExamState>()(
       attempts: [],
       session: null,
       startSession: (mode, questions) =>
-        set({ session: { mode, questions, index: 0, answers: {}, startedAt: Date.now() } }),
-      answerCurrent: (letter) => {
+        set({ session: { mode, questions, answers: {}, startedAt: Date.now() } }),
+      // Answers are keyed by questionId — safe against re-selection and out-of-order navigation.
+      answer: (questionId, letter) => {
         const s = get().session;
         if (!s) return;
-        const qid = s.questions[s.index].id;
-        const answers = { ...s.answers, [qid]: letter };
-        const index = Math.min(s.index + 1, s.questions.length);
-        set({ session: { ...s, answers, index } });
-      },
-      goto: (index) => {
-        const s = get().session;
-        if (s) set({ session: { ...s, index } });
+        set({ session: { ...s, answers: { ...s.answers, [questionId]: letter } } });
       },
       finishSession: () => {
         const s = get().session;
@@ -923,7 +937,7 @@ export const useExamStore = create<ExamState>()(
         });
         const correct = results.filter((r) => r.correct).length;
         const score = scaledScore(correct, results.length);
-        const scenariosUsed = [...new Set(s.questions.map((q) => q.scenario))] as ScenarioId[];
+        const scenariosUsed = [...new Set(s.questions.map((q) => q.scenario))];
         const attempt: Attempt = {
           id: newId(), mode: s.mode, startedAt: s.startedAt, finishedAt: Date.now(),
           scenariosUsed, results, scaledScore: score, passed: isPass(score),
@@ -1330,7 +1344,7 @@ export default function Exam() {
   const [answers, setAnswers] = useState<Record<string, Letter>>({});
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const startSession = useExamStore((s) => s.startSession);
-  const answerCurrent = useExamStore((s) => s.answerCurrent);
+  const answer = useExamStore((s) => s.answer);
   const finishSession = useExamStore((s) => s.finishSession);
 
   // Start the persisted session once, lazily.
@@ -1349,7 +1363,7 @@ export default function Exam() {
   const answered = Object.keys(answers).length;
   const select = (l: Letter) => {
     setAnswers((a) => ({ ...a, [q.id]: l }));
-    answerCurrent(l);
+    answer(q.id, l);
   };
   const submit = () => setAttempt(finishSession());
 
@@ -1690,6 +1704,6 @@ git commit -m "test(e2e): exam + practice smoke; final verification"
 
 **Placeholder scan:** No "TBD/TODO". Task 15 intentionally does not inline all 60 questions (authoring is the execution work), but it fixes format, source grounding, per-question quality bar, an example entry, and a validation+verification gate — not a vague "write questions" instruction.
 
-**Type consistency:** `Letter`, `Domain`, `ScenarioId`, `Option`, `Question`, `QuestionResult`, `Attempt`, `BreakdownEntry`, `ExamConfig` defined once (Task 2) and reused verbatim. `validateQuestionBank`, `allQuestions`, `scaledScore`, `isPass`, `computeBreakdown`, `composeExam`, `mulberry32`, and store actions (`startSession`/`answerCurrent`/`finishSession`/`bestScore`) are named identically across tasks. Scenario ids and domain ids match the Global Constraints list.
+**Type consistency:** `Letter`, `Domain`, `ScenarioId`, `Option`, `Question`, `QuestionResult`, `Attempt`, `BreakdownEntry`, `ExamConfig` defined once (Task 2) and reused verbatim. `validateQuestionBank`, `allQuestions`, `scaledScore`, `isPass`, `computeBreakdown`, `composeExam`, `mulberry32`, and store actions (`startSession`/`answer`/`finishSession`/`bestScore`) are named identically across tasks. Scenario ids and domain ids match the Global Constraints list.
 
 **Known risk carried forward:** exam length (20 = 4×5) is a config default; the guide fixes 4 scenarios but not questions-per-scenario. `composeExam` throws clearly if fewer than 4 scenarios have ≥5 questions — which is why Task 15 (fill all 8 scenarios) must land before exam mode is considered production-complete, though exam mode already works on the 4 legacy scenarios after Task 11.
