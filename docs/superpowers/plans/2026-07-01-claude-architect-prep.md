@@ -972,8 +972,9 @@ git commit -m "feat(store): persisted attempts + session state with history cap"
 - Create: `src/components/Markdown.tsx`, `src/components/OptionList.tsx`, `src/components/Explanation.tsx`, `src/components/QuestionCard.tsx`
 
 **Interfaces:**
-- Produces: `<QuestionCard question mode revealed selected onSelect />` where
-  `mode: "practice" | "exam"`, `revealed: boolean`, `selected: Letter | null`, `onSelect: (l: Letter) => void`.
+- Produces: `<QuestionCard question revealed selected onSelect />` where
+  `revealed: boolean` (caller-driven — practice reveals on select, exam stays false until results),
+  `selected: Letter | null`, `onSelect: (l: Letter) => void`. No `mode` prop; reveal timing is the caller's job.
 
 - [ ] **Step 1: Install markdown deps**
 ```bash
