@@ -196,6 +196,32 @@ Re-review the current diff. Report ONLY new or unresolved issues."
 
 The common thread: anything under `~/.claude/` is yours alone and invisible to collaborators; anything under the project's `.claude/` (or a repo-root `CLAUDE.md`) ships with `git clone` and is what the whole team sees.
 
+## Session & memory commands
+
+Two built-in Claude Code commands manage context and memory:
+
+- **`/compact`** compresses the current context — it summarizes prior history to free up the context window during long investigation sessions that fill with verbose tool output. Risk: exact numeric values, dates, and specific details can be lost in the summary, so extract critical facts into a persistent block or scratchpad before compacting.
+- **`/memory`** opens the `CLAUDE.md` file for editing so you can save notes, preferences, and context that persist across sessions and load automatically on startup. It's the alternative to re-explaining the same project conventions and current-work context every session.
+
+### Session management: `--resume` and `fork_session`
+
+- **`--resume <session-name>`** continues a prior named session with its saved context — useful for long investigations spanning sessions:
+  ```bash
+  claude --resume investigation-auth-bug
+  ```
+  Risk: if files changed since that session, its tool results may be **stale**.
+- **`fork_session`** branches an independent session from a shared context point. Both forks inherit context up to the branch point, then diverge — useful for comparing approaches (e.g. "Redux vs Context API") without cross-contamination.
+- **When to start fresh instead of resuming:** if tool results are stale (files changed) or a lot of time has passed and context has degraded, restart with a short summary ("Here's what we found: …") rather than resuming with old tool data.
+
+## Iterative refinement for progressive improvement
+
+Good output is usually iterative, not one-shot:
+
+- **Concrete input/output examples** are the most effective way to communicate expectations — give 2–3 samples (including edge cases) showing the transformation you want.
+- **Test-driven iteration:** write the tests / expected behavior first, then iterate based on failures.
+- **The interview pattern:** let Claude ask clarifying questions to surface non-obvious design considerations (cache invalidation, failure modes) before implementing — see the Prompt-engineering page.
+- **Batch vs sequential feedback:** give **all** issues in one message when they're **interdependent**; give them **sequentially** when they're independent, so each fix is evaluated in isolation.
+
 ## Exam focus
 
 - **Placement diagnostics are the recurring question type**: given a symptom ("new hire missing standards," "command not available to the team," "rule loading everywhere instead of just tests"), identify which config layer was used incorrectly. Know the four placement axes cold: user (`~/.claude/`) vs. project (`.claude/`) vs. directory-level `CLAUDE.md` vs. path-scoped `.claude/rules/`.

@@ -20,6 +20,9 @@ const withSerwist = withSerwistInit({
     { url: "/study/prompt-engineering", revision },
     { url: "/study/tool-mcp-design", revision },
     { url: "/study/context-reliability", revision },
+    { url: "/study/exam-overview", revision },
+    { url: "/study/glossary", revision },
+    { url: "/study/out-of-scope", revision },
   ],
 });
 const nextConfig: NextConfig = {

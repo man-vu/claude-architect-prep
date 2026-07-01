@@ -200,6 +200,25 @@ The Batches API trades latency for cost: **asynchronous** processing, roughly **
 
 **Partial failure handling:** batches don't fail atomically — some items succeed, some error out. Iterate the results, identify failed entries by their `custom_id`, and re-submit only those as a new (much smaller) batch rather than resubmitting the entire original set.
 
+## The interview pattern
+
+Before committing to an implementation, have Claude ask clarifying questions instead of guessing — surfacing non-obvious design decisions early:
+
+```
+Claude: "Before implementing caching for the API, a few questions:
+1. Which cache-invalidation strategy do you prefer — TTL or event-based?
+2. Is stale data acceptable when the cache is unavailable?
+3. Should caching be per-user or global?
+4. What is the expected data volume to cache?"
+```
+
+**When it's worth it:**
+- Unfamiliar domain (fintech, healthcare, legal)
+- Tasks with non-obvious implications (cache strategies, failure modes)
+- Multiple viable approaches where the best choice depends on context you weren't given
+
+Asking first is cheaper than building the wrong thing and reworking it — and the questions themselves document the assumptions behind the design.
+
 ## Exam focus
 
 - Recognize *why* an example works: it encodes both the format and the decision logic a rule can't fully spell out — expect scenario questions where the "best" prompt fix is adding 2–4 examples, not more prose.
