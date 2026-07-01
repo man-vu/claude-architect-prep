@@ -353,7 +353,7 @@ export const agenticAiTools: Question[] = [
     "options": [
       {
         "letter": "A",
-        "text": "The Task tool, which lets the coordinator spawn subagents as needed for a given request.",
+        "text": "The Agent tool (formerly named Task), which lets the coordinator spawn subagents as needed for a given request.",
         "correct": true
       },
       {
@@ -373,7 +373,7 @@ export const agenticAiTools: Question[] = [
       }
     ],
     "correct": "A",
-    "explanation": "The Agent SDK's Task tool is the mechanism for a coordinator to spawn subagents dynamically in a hub-and-spoke arrangement. (C) is tempting because it also involves forking context, but that's a Claude Code skill mechanism for isolating a skill's own execution, not how an SDK coordinator spawns subagents. (B) is for deterministic policy enforcement, not for creating subagents. (D) would work but is unnecessary infrastructure for something the SDK already provides directly.",
+    "explanation": "The Agent SDK's Agent tool (formerly named Task; some legacy contexts still emit `Task`) is the mechanism for a coordinator to spawn subagents dynamically in a hub-and-spoke arrangement. (C) is tempting because it also involves forking context, but that's a Claude Code skill mechanism for isolating a skill's own execution, not how an SDK coordinator spawns subagents. (B) is for deterministic policy enforcement, not for creating subagents. (D) would work but is unnecessary infrastructure for something the SDK already provides directly.",
     "domain": "agent-architecture"
   },
   {
@@ -399,7 +399,7 @@ export const agenticAiTools: Question[] = [
       },
       {
         "letter": "D",
-        "text": "A Task-tool call to spawn a subagent for the audit; and a prompt instruction telling it not to edit files.",
+        "text": "An Agent-tool call (formerly Task) to spawn a subagent for the audit; and a prompt instruction telling it not to edit files.",
         "correct": false
       }
     ],
