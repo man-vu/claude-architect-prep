@@ -19,6 +19,7 @@ export default function Home() {
         <Link href="/exam" className="flex-1 rounded-xl bg-blue-600 px-6 py-4 text-center text-lg font-semibold text-white hover:bg-blue-700">Start exam</Link>
         <Link href="/practice" className="flex-1 rounded-xl border-2 border-slate-300 px-6 py-4 text-center text-lg font-semibold hover:bg-slate-50">Practice by topic</Link>
       </div>
+      <Link href="/study" className="mt-3 block rounded-xl border-2 border-slate-300 px-6 py-4 text-center text-lg font-semibold hover:bg-slate-50">Study the theory</Link>
       <Link href="/history" className="mt-4 inline-block text-sm text-blue-700 hover:underline">View history →</Link>
     </main>
   );

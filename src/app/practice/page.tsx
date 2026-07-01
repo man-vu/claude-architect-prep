@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { allQuestions } from "@/content/questions";
 import { DOMAINS, SCENARIOS } from "@/content/scenarios";
@@ -17,6 +17,15 @@ export default function Practice() {
     if (!filter) return [];
     return allQuestions.filter((q) => (filter.kind === "scenario" ? q.scenario === filter.id : q.domain === filter.id));
   }, [filter]);
+
+  useEffect(() => {
+    const d = new URLSearchParams(window.location.search).get("domain");
+    if (d && (Object.keys(DOMAINS) as string[]).includes(d)) {
+      setFilter({ kind: "domain", id: d as Domain });
+      setI(0);
+      setSelected(null);
+    }
+  }, []);
 
   if (!filter) {
     return (
