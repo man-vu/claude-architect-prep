@@ -1330,7 +1330,7 @@ export function ResultsSummary({ attempt, questions }: { attempt: Attempt; quest
 `src/app/exam/page.tsx`:
 ```tsx
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { allQuestions } from "@/content/questions";
 import { composeExam } from "@/domain/exam";
@@ -1348,8 +1348,10 @@ export default function Exam() {
   const answer = useExamStore((s) => s.answer);
   const finishSession = useExamStore((s) => s.finishSession);
 
-  // Start the persisted session once, lazily.
-  useMemo(() => startSession("exam", questions), [questions, startSession]);
+  // Start the persisted session on mount.
+  useEffect(() => {
+    startSession("exam", questions);
+  }, [questions, startSession]);
 
   if (attempt) {
     return (
