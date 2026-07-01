@@ -1481,6 +1481,16 @@ git commit -m "style: mobile responsiveness pass (375px/768px)"
 
 ### Task 14: PWA — manifest, icons, service worker, offline
 
+> **Post-implementation correction (commit 9cd386f):** the `defaultCache` from
+> `@serwist/next/worker` is a Next *server* preset and does NOT serve exported HTML
+> documents offline — a dynamic offline test (Playwright, network offline) confirmed the
+> installed PWA failed to load offline. The shipped `src/app/sw.ts` instead uses explicit
+> `runtimeCaching` (navigate → NetworkFirst, style/script/worker → StaleWhileRevalidate,
+> image/font → CacheFirst) with `navigationPreload: false`, and `next.config.ts` adds
+> `additionalPrecacheEntries` for `/`, `/exam`, `/practice`, `/history` (git-hash revision)
+> so every route's HTML is precached and served offline. The code below is the original
+> plan; see the repo for the corrected version.
+
 **Files:**
 - Create: `public/manifest.webmanifest`, `public/icons/icon-192.png`, `public/icons/icon-512.png`, `public/icons/apple-touch-icon.png`, `src/app/sw.ts`
 - Modify: `next.config.ts`, `src/app/layout.tsx`
