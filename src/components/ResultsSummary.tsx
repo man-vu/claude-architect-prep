@@ -9,6 +9,7 @@ export function ResultsSummary({ attempt, questions }: { attempt: Attempt; quest
   const byId = new Map(questions.map((q) => [q.id, q]));
   const correct = attempt.results.filter((r) => r.correct).length;
   const domainBd = computeBreakdown(attempt.results, byId, "domain");
+  const scenarioBd = computeBreakdown(attempt.results, byId, "scenario");
   const wrong = attempt.results.filter((r) => !r.correct);
   return (
     <div className="mx-auto max-w-3xl">
@@ -23,6 +24,15 @@ export function ResultsSummary({ attempt, questions }: { attempt: Attempt; quest
         {domainBd.map((b) => (
           <li key={b.key} className="flex justify-between rounded-lg bg-white px-4 py-2 text-sm shadow-sm">
             <span>{DOMAINS[b.key as keyof typeof DOMAINS]?.label ?? b.key}</span>
+            <span className="font-semibold">{b.correct}/{b.total} · {b.pct}%</span>
+          </li>
+        ))}
+      </ul>
+      <h2 className="mt-8 text-lg font-bold">By scenario</h2>
+      <ul className="mt-2 space-y-1">
+        {scenarioBd.map((b) => (
+          <li key={b.key} className="flex justify-between rounded-lg bg-white px-4 py-2 text-sm shadow-sm">
+            <span>{SCENARIOS[b.key as keyof typeof SCENARIOS]?.label ?? b.key}</span>
             <span className="font-semibold">{b.correct}/{b.total} · {b.pct}%</span>
           </li>
         ))}
