@@ -80,6 +80,8 @@ Pairing criteria with a severity rubric removes the remaining interpretation gap
 
 Explicit criteria plus a rubric like this measurably reduces both drift (the model inventing its own bar over a long run) and false positives (flagging style as if it were a defect).
 
+When a whole category generates too many false positives to trust, the pragmatic move is to **temporarily disable that category** — stop reporting it — while you iterate on its criteria separately. A category that fires wrong most of the time doesn't just waste attention; it erodes trust in the *accurate* categories beside it, so silencing it protects the signal of the rest until its prompt is fixed.
+
 ## Prompt chaining (sequential focused steps)
 
 Chaining breaks a task into a fixed sequence of focused prompts, each with a narrow job, rather than asking one prompt to do everything at once:
@@ -159,6 +161,10 @@ Rather than validating only after the fact, some errors can be caught *within* a
 
 `stated_total` is read directly off the document; `calculated_total` is derived by summing the line items. If they disagree, `conflict_detected` flips to `true` — the discrepancy surfaces immediately, without a second round trip. This is cheaper than a full retry loop for the specific case of "does the document agree with itself," and it composes with retry-with-feedback: use dual-value extraction for the fields where an internal check is possible, and fall back to validate → retry for cross-document or business-rule errors that require external context.
 
+### Tracking why findings fire
+
+To improve a review prompt over time, have each finding carry a **`detected_pattern`** field naming the code construct that triggered it. When a developer dismisses a finding, that field lets you aggregate *which* patterns produce false positives — turning scattered dismissals into a systematic signal about which criteria to tighten, instead of guessing.
+
 ## Structured output basics
 
 `tool_use` with a JSON Schema is the reliable way to get schema-conformant output — it guarantees valid **syntax** (no malformed JSON, no missing brackets) but not **semantics** (a schema-valid response can still be wrong, incomplete, or hallucinated). Syntax guarantees are a floor, not a substitute for the validation loop above. See the tool-design domain for the full mechanics of `tool_use` and `tool_choice`; the schema-authoring habits worth calling out here:
@@ -200,6 +206,8 @@ The Batches API trades latency for cost: **asynchronous** processing, roughly **
 
 **Partial failure handling:** batches don't fail atomically — some items succeed, some error out. Iterate the results, identify failed entries by their `custom_id`, and re-submit only those as a new (much smaller) batch rather than resubmitting the entire original set.
 
+**Refine on a sample first.** Before submitting tens of thousands of documents, run the prompt against a small representative sample and iterate until it's reliable. A prompt bug found *after* a 10,000-document batch means re-paying and re-waiting on the whole run; catching it on 50 documents is nearly free — maximizing first-pass success is what makes batch economics actually pay off.
+
 ## The interview pattern
 
 Before committing to an implementation, have Claude ask clarifying questions instead of guessing — surfacing non-obvious design decisions early:
@@ -228,4 +236,5 @@ Asking first is cheaper than building the wrong thing and reworking it — and t
 - Know Pydantic's three jobs: structural validation, custom business-logic validators, and JSON Schema generation for `tool_use`.
 - Self-correction via dual-value extraction (`stated_total` / `calculated_total` / `conflict_detected`) catches internal inconsistency without a retry round trip — don't confuse it with the validate-then-retry loop, which handles errors that need external checking.
 - `tool_use` guarantees valid JSON syntax, never semantic correctness — a schema-conformant response can still be wrong.
-- Batches API: async, ~50% cheaper, up to 24h processing, `custom_id` for correlation, one request → one response (no tool loops), and the SLA math of subtracting the 24h ceiling from the deadline to get the submission window. Pick sync over batch whenever anything is blocking on the result.
+- Batches API: async, ~50% cheaper, up to 24h processing, `custom_id` for correlation, one request → one response (no tool loops), and the SLA math of subtracting the 24h ceiling from the deadline to get the submission window. Pick sync over batch whenever anything is blocking on the result — and refine the prompt on a small sample before committing a large batch.
+- To cut false positives, replace confidence-based filtering with explicit allow/deny criteria; when one category is still too noisy, temporarily disable it rather than let it erode trust in the accurate ones, and add a `detected_pattern` field so dismissed findings reveal which criteria to tighten.

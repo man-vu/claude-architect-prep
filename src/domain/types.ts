@@ -6,8 +6,7 @@ export type Domain =
 
 export type ScenarioId =
   | "customer-support" | "code-generation" | "multi-agent-research" | "ci"
-  | "developer-productivity" | "structured-data-extraction"
-  | "conversational-ai" | "agentic-ai-tools";
+  | "developer-productivity" | "structured-data-extraction";
 
 export interface Option { letter: Letter; text: string; correct: boolean }
 

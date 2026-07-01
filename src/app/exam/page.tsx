@@ -21,7 +21,7 @@ export default function Exam() {
   // prerendered static HTML and the first client render, causing a hydration mismatch.
   // Both the server output and the first client render show the loading state, so they match.
   useEffect(() => {
-    const qs = composeExam(allQuestions, { scenarioCount: 4, perScenario: 5 });
+    const qs = composeExam(allQuestions, { scenarioCount: 4, perScenario: 15 });
     setQuestions(qs);
     startSession("exam", qs);
   }, [startSession]);

@@ -3,12 +3,12 @@ A quick reference to the technologies and concepts the exam draws on — use it 
 ## Technologies & concepts
 | Technology | Key aspects |
 |---|---|
-| **Claude Agent SDK** | `AgentDefinition`, agent loops, `stop_reason`, hooks (PostToolUse), spawning subagents via `Task`, `allowedTools` |
-| **Model Context Protocol (MCP)** | MCP servers, tools, resources, `isError`, tool descriptions, `.mcp.json`, environment variables |
-| **Claude Code** | CLAUDE.md hierarchy, `.claude/rules/` with glob patterns, `.claude/commands/`, `.claude/skills/` with SKILL.md, planning mode, `/compact`, `--resume`, `fork_session` |
+| **Claude Agent SDK** | `AgentDefinition`, agent loops, `stop_reason`, hooks (PostToolUse, tool-call interception), spawning subagents via `Task`, `allowedTools` |
+| **Model Context Protocol (MCP)** | MCP servers, tools, resources, `isError`, tool descriptions, tool distribution, `.mcp.json`, environment variables |
+| **Claude Code** | CLAUDE.md hierarchy, `.claude/rules/` with glob patterns, `.claude/commands/`, `.claude/skills/` with SKILL.md frontmatter (`context: fork`, `allowed-tools`, `argument-hint`), plan mode vs direct execution, `/memory`, `/compact`, `--resume`, `fork_session`, Explore subagent |
 | **Claude Code CLI** | `-p` / `--print` (non-interactive), `--output-format json`, `--json-schema` |
 | **Claude API** | `tool_use` with JSON schemas, `tool_choice` (`auto`/`any`/forced), `stop_reason`, `max_tokens`, system prompts |
-| **Message Batches API** | ~50% savings, up to 24-hour window, `custom_id`, no multi-turn tool calling |
+| **Message Batches API** | ~50% savings, up to 24-hour window, `custom_id`, polling for completion, no multi-turn tool calling |
 | **JSON Schema** | Required vs optional, nullable fields, enum types, `"other"` + detail, strict mode |
 | **Pydantic** | Schema validation, semantic errors, validation/retry loops |
 | **Built-in tools** | Read, Write, Edit, Bash, Grep, Glob — purpose and selection criteria |

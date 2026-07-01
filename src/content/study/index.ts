@@ -14,7 +14,7 @@ export const STUDY_PAGES: StudyPage[] = [
   { slug: "prompt-engineering", title: "Prompt engineering & structured output", group: "domain", weight: 20, blurb: "Few-shot, explicit criteria, chaining, the interview pattern, validation loops, self-correction, and batches." },
   { slug: "tool-mcp-design", title: "Tool design & MCP integration", group: "domain", weight: 18, blurb: "Tool descriptions, JSON-schema design, tool_choice, MCP servers, and the built-in tools." },
   { slug: "context-reliability", title: "Context management & reliability", group: "domain", weight: 15, blurb: "Statelessness, context management, escalation & human-in-the-loop, and provenance." },
-  { slug: "exam-overview", title: "Exam format & scenarios", group: "reference", blurb: "Format, scoring, the 5 weighted domains, the 8 scenarios, prep recommendations, and official docs." },
+  { slug: "exam-overview", title: "Exam format & scenarios", group: "reference", blurb: "Format, scoring, the 5 weighted domains, the 6 scenarios, prep recommendations, and official docs." },
   { slug: "glossary", title: "Technologies & concepts (glossary)", group: "reference", blurb: "Quick reference of the SDK, MCP, Claude Code, API, and prompt-engineering concepts." },
   { slug: "out-of-scope", title: "Out-of-scope topics", group: "reference", blurb: "What the exam does NOT cover — so you don't over-study." },
 ];

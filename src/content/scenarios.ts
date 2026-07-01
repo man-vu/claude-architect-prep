@@ -9,12 +9,10 @@ export const DOMAINS: Record<Domain, { label: string; weight: number }> = {
 };
 
 export const SCENARIOS: Record<ScenarioId, { label: string }> = {
-  "customer-support": { label: "Customer Support Agent" },
+  "customer-support": { label: "Customer Support Resolution Agent" },
   "code-generation": { label: "Code Generation with Claude Code" },
-  "multi-agent-research": { label: "Multi-agent Research System" },
+  "multi-agent-research": { label: "Multi-Agent Research System" },
   ci: { label: "Claude Code for Continuous Integration" },
-  "developer-productivity": { label: "Developer Productivity Tools" },
+  "developer-productivity": { label: "Developer Productivity with Claude" },
   "structured-data-extraction": { label: "Structured Data Extraction" },
-  "conversational-ai": { label: "Conversational AI Architecture Patterns" },
-  "agentic-ai-tools": { label: "Agentic AI Tools" },
 };

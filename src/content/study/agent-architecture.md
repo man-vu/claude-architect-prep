@@ -31,6 +31,8 @@ while True:
     # handle "max_tokens", "stop_sequence" etc. as application-specific cases
 ```
 
+The loop is **model-driven**: Claude decides which tool to call next by reasoning over the current context, rather than following a hardcoded decision tree or a fixed, pre-scripted tool sequence. That adaptivity is the whole point of an agent — and it's why the control signal below (`stop_reason`) carries so much weight: you aren't dictating each step, so you need a reliable way to know when the model is finished.
+
 ### The model is stateless
 
 The model holds no memory between calls. Every single request re-sends the entire message history — system prompt, every prior user turn, every prior assistant turn, every tool call and its result. "Context" is not something the model remembers; it's something your application resubmits each time. This has direct consequences for cost (tokens re-billed every turn, mitigated by prompt caching) and for architecture (anything the model needs to "recall" must be in the messages array you send).
@@ -120,7 +122,7 @@ The dominant multi-agent topology is **hub-and-spoke** (a star topology): one co
 **Coordinator responsibilities:**
 - Decompose the incoming request into subtasks
 - Select which subagent(s) handle each subtask (using each subagent's `description`)
-- Delegate work via the `Task` tool (Claude Code UI now calls this the `Agent` tool; the SDK and most written documentation still refer to it as `Task` — expect either term)
+- Delegate work via the `Task` tool (Claude Code UI now calls this the `Agent` tool; the SDK and most written documentation still refer to it as `Task` — expect either term). The coordinator's own `allowed_tools`/`allowedTools` **must include `Task`**, or it has no mechanism to spawn subagents at all
 - Aggregate subagent results into a coherent response
 - Handle errors surfaced by subagents
 - Track overall task/conversation state
@@ -172,13 +174,32 @@ Task(agent="inventory_checker", prompt="Check stock for SKU-4471...")
 Task(agent="credit_checker", prompt="Check credit standing for customer C-9910...")
 ```
 
+### Dynamic delegation and iterative refinement
+
+A coordinator should not blindly run every subagent on every request. Three related skills separate a robust orchestrator from a naive pipeline:
+
+- **Dynamic selection** — analyze the request and invoke only the subagents it actually needs, rather than always routing through the full pipeline. A simple factual lookup shouldn't wake the entire fleet.
+- **Scope partitioning** — when fanning out, assign each subagent a *distinct* slice (different subtopics or source types) so their work doesn't overlap and duplicate effort.
+- **Iterative refinement loops** — after synthesis, the coordinator evaluates the result for **coverage gaps**, re-delegates targeted follow-up queries to the search/analysis subagents, and re-invokes synthesis — repeating until coverage is sufficient. A single decomposition pass often misses whole sub-areas: the classic failure is decomposing "creative industries" into only visual-arts subtasks (digital art, graphic design, photography) and never covering music, writing, or film, while every subagent still reports success on the narrow task it was actually given.
+
+Routing all subagent communication back through the coordinator is what makes this possible: the coordinator is the single point with the **observability** to notice a gap, apply consistent error handling, and control what information flows where.
+
+## Session state, resumption, and forking
+
+Agent work often spans multiple sessions, and how you resume matters for reliability.
+
+- **`--resume <session-name>`** continues a specific named prior conversation, reloading its history so the agent picks up where it left off. Name investigation sessions deliberately so you can return to the right one later.
+- **`fork_session`** branches from a shared analysis baseline into independent lines of work — e.g., exploring two refactoring or testing strategies from the same codebase analysis without either branch's context contaminating the other.
+- **Resume vs. start fresh.** Resuming is right when the prior context is *mostly still valid*. When the prior tool results are **stale** — files have changed since they were captured — starting a new session seeded with a compact structured summary is more reliable than resuming on top of outdated results the model may still treat as current.
+- **Tell a resumed session what changed.** If files were modified after the session's analysis, explicitly inform the agent of the specific changes so it re-analyzes just those, rather than trusting stale reads or being forced to re-explore the whole codebase.
+
 ## Hooks: Deterministic Enforcement
 
-Prompt instructions are **probabilistic** — a well-written system prompt rule is followed roughly 85–95% of the time by a capable model, which is good but not good enough for anything where being wrong has real consequences. **Hooks** intercept tool calls at defined lifecycle points and enforce rules with code, giving **100% deterministic** compliance regardless of what the model decided to do.
+Prompt instructions are **probabilistic** — a well-written system prompt rule is followed *most* of the time by a capable model, but it always carries a **non-zero failure rate**, which is not good enough for anything where being wrong has real consequences. **Hooks** intercept tool calls at defined lifecycle points and enforce rules with code, giving **100% deterministic** compliance regardless of what the model decided to do.
 
 | | Prompt instructions | Hooks |
 |---|---|---|
-| Enforcement | Probabilistic (~85–95%) | Deterministic (100%) |
+| Enforcement | Probabilistic (non-zero failure rate) | Deterministic (100%) |
 | Where it lives | System prompt text | Application code, outside the model's control |
 | Can the model talk its way around it | Yes, in principle (edge cases, adversarial input, drift) | No — the hook runs regardless of model reasoning |
 | Best for | Style, tone, preferences, soft guidance | Financial limits, legal/compliance rules, safety-critical actions |
@@ -329,7 +350,9 @@ Related but distinct from error handling: some situations should route to a huma
 - Hub-and-spoke: the coordinator is the sole user-facing interface, owns decomposition/delegation/aggregation/error-handling, and is the only path for inter-agent communication — subagents never talk to each other directly.
 - Subagents have **isolated context** — no inherited history, no shared memory. A vague `Task` prompt ("Analyze the document") produces a vague result because there is nothing else for the subagent to draw on; a good prompt inlines full data context, states the goal, specifies output format, and covers edge cases.
 - Multiple `Task`/`Agent` calls issued in the same coordinator turn run in **parallel** — dispatch independent subtasks together, not sequentially.
-- Hooks are deterministic (100%); prompts are probabilistic (~85–95%). Route financial, legal, and safety-critical rules through `PreToolUse`/`PostToolUse` hooks, not prompt instructions. `PreToolUse` can block/redirect a call before it executes; `PostToolUse` can normalize/trim a result before the model sees it.
+- A coordinator must have `Task` in its own `allowedTools` to spawn subagents; it should select subagents dynamically (not always the full pipeline), partition scope to avoid duplicate work, and run **iterative refinement loops** — re-delegating and re-synthesizing until coverage gaps close (the "only visual arts, never music/film" failure is too-narrow decomposition, not a broken subagent).
+- Session control: `--resume <name>` continues a named session; `fork_session` branches from a shared baseline. Prefer a fresh session seeded with a structured summary over resuming on **stale** tool results, and tell a resumed session which files changed so it re-analyzes only those.
+- Hooks are deterministic (100%); prompts are probabilistic (a non-zero failure rate, however well-written). Route financial, legal, and safety-critical rules through `PreToolUse`/`PostToolUse` hooks, not prompt instructions. `PreToolUse` can block/redirect a call before it executes; `PostToolUse` can normalize/trim a result before the model sees it.
 - Fixed pipelines suit predictable, repeatable, ordered work (e.g., per-file then cross-file code review, which avoids attention dilution); dynamic decomposition suits open-ended tasks where each step's scope depends on the previous step's findings.
 - Error categories dictate response: transient → retry with backoff; validation → fix input, don't blindly retry; business → explain and propose an alternative; permission → escalate. Attempt 1–2 local retries inside the subagent before propagating to the coordinator.
 - Structured error responses (`isError`, `errorCategory`, `attempted_query`, `partial_results`, `completion_rate`, `failed_sections`) let the coordinator make an informed recovery decision — a bare "operation failed" string does not.

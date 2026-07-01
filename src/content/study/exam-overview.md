@@ -6,30 +6,34 @@ A **solution architect** with ~6+ months of hands-on production experience with 
 ## Format
 | Parameter | Value |
 |---|---|
+| Questions | 60 |
+| Time limit | 120 minutes |
 | Question type | Multiple choice — 1 correct of 4 |
+| Exam structure | 4 scenarios drawn from a bank of 6 |
 | Scoring | 100–1000 scale; **passing = 720** |
+| Result | Pass or fail |
 | Guessing penalty | None — answer every question |
-| Scenarios | 4 of 8 possible, randomly selected |
+| Delivery | Online proctored or at a test center |
+| Fee | $125 USD |
+| Validity | 12 months from the award date |
 
 ## The five domains (by weight)
 | Domain | Weight |
 |---|---|
-| Agent architecture & orchestration | **27%** |
-| Claude Code configuration & workflows | **20%** |
-| Prompt engineering & structured output | **20%** |
-| Tool design & MCP integration | **18%** |
-| Context management & reliability | **15%** |
+| Agentic Architecture & Orchestration | **27%** |
+| Claude Code Configuration & Workflows | **20%** |
+| Prompt Engineering & Structured Output | **20%** |
+| Tool Design & MCP Integration | **18%** |
+| Context Management & Reliability | **15%** |
 
-## The eight scenarios
-Each exam randomly draws 4 of these 8:
-1. **Customer Support Agent** — returns/billing/account issues via the Agent SDK with MCP tools (`get_customer`, `lookup_order`, `process_refund`, `escalate_to_human`); target 80%+ first-contact resolution with appropriate escalation.
+## The six scenarios
+Each exam randomly draws 4 of these 6:
+1. **Customer Support Resolution Agent** — returns/billing/account issues via the Agent SDK with MCP tools (`get_customer`, `lookup_order`, `process_refund`, `escalate_to_human`); target 80%+ first-contact resolution with appropriate escalation.
 2. **Code Generation with Claude Code** — generation, refactoring, debugging, docs with custom slash commands, CLAUDE.md, and planning mode.
 3. **Multi-Agent Research System** — a coordinator delegates to web-research, document-analysis, synthesis, and report-generation subagents; reports must include citations.
-4. **Developer Productivity Tools** — exploring unfamiliar codebases, boilerplate, and automation with built-in tools (Read/Write/Bash/Grep/Glob) and MCP servers.
+4. **Developer Productivity with Claude** — exploring unfamiliar codebases, boilerplate, and automation with built-in tools (Read/Write/Bash/Grep/Glob) and MCP servers.
 5. **Claude Code for Continuous Integration** — automated reviews, test generation, and PR feedback; prompts tuned to minimize false positives.
 6. **Structured Data Extraction** — extract from unstructured docs, validate with JSON schemas, handle edge cases.
-7. **Conversational AI Architecture Patterns** — multi-turn context management, instruction persistence, memory strategies, safe tool design, and ambiguous/conflicting inputs.
-8. **Agentic AI Tools** — reported by candidates but not yet documented in the source guide; ground it in agentic-loop fundamentals.
 
 ## How to prepare
 1. Build a full agent loop with the Agent SDK (tools, error handling, session management, subagents with explicit context passing).

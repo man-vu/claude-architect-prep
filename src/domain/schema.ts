@@ -9,7 +9,6 @@ const domain = z.enum([
 const scenario = z.enum([
   "customer-support", "code-generation", "multi-agent-research", "ci",
   "developer-productivity", "structured-data-extraction",
-  "conversational-ai", "agentic-ai-tools",
 ]);
 
 const questionSchema = z

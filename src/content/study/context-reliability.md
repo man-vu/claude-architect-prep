@@ -53,6 +53,10 @@ Left unmanaged, tool results are the fastest-growing part of a long conversation
 
 When history is compacted to save space (either by the model or by a summarization step in the harness), qualitative narrative survives well but **numeric precision does not**. An exact figure like "42.3%" or a specific date like "2024-06-15" tends to drift into "about 42%" or "sometime last year" after a round or two of summarization. This is dangerous specifically because the degraded value still *looks* confident and specific enough to be relied on — the vagueness isn't flagged, it's just quietly introduced. Any workflow that depends on exact numbers, IDs, or dates surviving a long session needs to protect them from ever entering the summarized-and-compressed part of history at all (see fact-extraction blocks, below).
 
+### Degradation in extended sessions
+
+Beyond any single failure mode, a very long session degrades in a subtler way: the model starts giving **inconsistent answers** and drifting toward generic **"typical patterns"** instead of the specific classes, functions, and facts it actually discovered earlier in the session. The tell is an agent that was precise at turn 10 answering at turn 60 as if it were reasoning from training priors rather than from what it found. This is exactly what the persistence techniques below counter: they re-ground the model in concrete findings rather than trusting those findings to survive intact in live context.
+
 ## Context management techniques
 
 ### 1. Fact-extraction / persistent "case facts" block
@@ -252,6 +256,7 @@ Match the output format to the kind of information: tables for numeric/comparabl
 
 - Know that the API is **stateless** — the full history (system prompt + messages + tool defs + tool results) is resent on every call, and that "memory" is an application-layer illusion built on top of this.
 - Be able to identify the three core context failure modes by name: **lost-in-the-middle**, **tool-result accumulation**, and **summarization-driven precision loss** (numbers/dates going vague).
+- Long sessions also **degrade**: the model drifts to generic "typical patterns" instead of the specific classes/facts it found earlier — scratchpad files and structured state re-ground it in concrete findings.
 - Recognize the six management techniques and what each one specifically counters: case-facts block (precision loss), trimming hooks (tool-result bloat), position-aware placement (lost-in-the-middle), scratchpads (cross-session persistence), subagent delegation (isolating verbose discovery), structured state + manifest (crash recovery).
 - Be able to separate **reliable** escalation triggers (explicit request, silent policy, no progress after N attempts, financial threshold, multiple matches) from **unreliable** ones (sentiment, self-rated confidence, complexity classifiers) — expect scenario questions that present a plausible-sounding but unreliable trigger as a distractor.
 - Know the three escalation patterns (immediate / attempt-then-escalate / acknowledge-offer-escalate-on-reiteration) and that escalating on the *first* sign of frustration is the wrong pattern.
