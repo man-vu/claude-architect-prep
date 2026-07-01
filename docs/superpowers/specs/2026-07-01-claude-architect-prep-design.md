@@ -41,6 +41,14 @@ purpose-built.
 - **Statically exportable** (`output: 'export'`) — no server logic; deploys to any static host.
 - **PWA:** web app manifest + service worker (installable + offline). Since all content
   is bundled, full offline works.
+
+### iPhone install (no Mac required)
+Delivered as a PWA, so iOS install needs **no MacBook, Xcode, Apple Developer account,
+or App Store review**: host the static export over HTTPS (free Vercel/Netlify deploy, or
+a tunnel from the dev machine), open the URL in **Safari → Share → Add to Home Screen**.
+The manifest + service worker give it a home-screen icon, fullscreen launch, and offline
+use. A native App Store app (which *would* need a Mac + Xcode + signing, cf. wispr-clone's
+`docs/superpowers/plans/2026-05-18-ios-keyboard-dictation.md`) is out of scope for this plan.
 - **State/persistence:** Zustand + `persist` middleware → `localStorage`.
 - **Markdown:** react-markdown + remark-gfm (question/option/explanation text contains inline `code`).
 - **Validation:** Zod for the question bank.
