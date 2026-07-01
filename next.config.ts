@@ -32,6 +32,7 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   output: "export",
   images: { unoptimized: true },
-  ...(basePath ? { basePath } : {}),
+  // trailingSlash keeps static-export client navigation (RSC .txt fetches) consistent under a basePath.
+  ...(basePath ? { basePath, trailingSlash: true } : {}),
 };
 export default withSerwist(nextConfig);
