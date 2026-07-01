@@ -14,6 +14,12 @@ const withSerwist = withSerwistInit({
     { url: "/exam", revision },
     { url: "/practice", revision },
     { url: "/history", revision },
+    { url: "/study", revision },
+    { url: "/study/agent-architecture", revision },
+    { url: "/study/claude-code-config", revision },
+    { url: "/study/prompt-engineering", revision },
+    { url: "/study/tool-mcp-design", revision },
+    { url: "/study/context-reliability", revision },
   ],
 });
 const nextConfig: NextConfig = {
