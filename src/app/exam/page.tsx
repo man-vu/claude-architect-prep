@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { allQuestions } from "@/content/questions";
 import { composeExam } from "@/domain/exam";
-import type { Attempt, Letter } from "@/domain/types";
+import type { Attempt, Letter, Question } from "@/domain/types";
 import { useExamStore } from "@/store/useExamStore";
 import { QuestionCard } from "@/components/QuestionCard";
 import { ResultsSummary } from "@/components/ResultsSummary";
 
 export default function Exam() {
-  const [questions] = useState(() => composeExam(allQuestions, { scenarioCount: 4, perScenario: 5 }));
+  const [questions, setQuestions] = useState<Question[] | null>(null);
   const [i, setI] = useState(0);
   const [answers, setAnswers] = useState<Record<string, Letter>>({});
   const [attempt, setAttempt] = useState<Attempt | null>(null);
@@ -17,10 +17,18 @@ export default function Exam() {
   const answer = useExamStore((s) => s.answer);
   const finishSession = useExamStore((s) => s.finishSession);
 
-  // Start the persisted session on mount.
+  // Compose the exam AFTER mount: the random draw would otherwise differ between the
+  // prerendered static HTML and the first client render, causing a hydration mismatch.
+  // Both the server output and the first client render show the loading state, so they match.
   useEffect(() => {
-    startSession("exam", questions);
-  }, [questions, startSession]);
+    const qs = composeExam(allQuestions, { scenarioCount: 4, perScenario: 5 });
+    setQuestions(qs);
+    startSession("exam", qs);
+  }, [startSession]);
+
+  if (!questions) {
+    return <main className="mx-auto max-w-3xl px-6 py-10 text-slate-500">Preparing your exam…</main>;
+  }
 
   if (attempt) {
     return (
