@@ -1,7 +1,7 @@
 "use client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Attempt, Letter, Question, QuestionResult, ScenarioId } from "@/domain/types";
+import type { Attempt, Letter, Question, QuestionResult } from "@/domain/types";
 import { isPass, scaledScore } from "@/domain/scoring";
 
 const HISTORY_CAP = 50;
@@ -11,8 +11,7 @@ function newId(): string { counter += 1; return `a${Date.now()}-${counter}`; }
 interface Session {
   mode: "exam" | "practice";
   questions: Question[];
-  index: number;
-  answers: Record<string, Letter | null>;
+  answers: Record<string, Letter>;
   startedAt: number;
 }
 
@@ -20,8 +19,7 @@ interface ExamState {
   attempts: Attempt[];
   session: Session | null;
   startSession: (mode: "exam" | "practice", questions: Question[]) => void;
-  answerCurrent: (letter: Letter) => void;
-  goto: (index: number) => void;
+  answer: (questionId: string, letter: Letter) => void;
   finishSession: () => Attempt | null;
   resetSession: () => void;
   bestScore: () => number | null;
@@ -33,18 +31,12 @@ export const useExamStore = create<ExamState>()(
       attempts: [],
       session: null,
       startSession: (mode, questions) =>
-        set({ session: { mode, questions, index: 0, answers: {}, startedAt: Date.now() } }),
-      answerCurrent: (letter) => {
+        set({ session: { mode, questions, answers: {}, startedAt: Date.now() } }),
+      // Answers keyed by questionId — safe against re-selection and out-of-order navigation.
+      answer: (questionId, letter) => {
         const s = get().session;
         if (!s) return;
-        const qid = s.questions[s.index].id;
-        const answers = { ...s.answers, [qid]: letter };
-        const index = Math.min(s.index + 1, s.questions.length);
-        set({ session: { ...s, answers, index } });
-      },
-      goto: (index) => {
-        const s = get().session;
-        if (s) set({ session: { ...s, index } });
+        set({ session: { ...s, answers: { ...s.answers, [questionId]: letter } } });
       },
       finishSession: () => {
         const s = get().session;
@@ -55,7 +47,7 @@ export const useExamStore = create<ExamState>()(
         });
         const correct = results.filter((r) => r.correct).length;
         const score = scaledScore(correct, results.length);
-        const scenariosUsed = [...new Set(s.questions.map((q) => q.scenario))] as ScenarioId[];
+        const scenariosUsed = [...new Set(s.questions.map((q) => q.scenario))];
         const attempt: Attempt = {
           id: newId(), mode: s.mode, startedAt: s.startedAt, finishedAt: Date.now(),
           scenariosUsed, results, scaledScore: score, passed: isPass(score),
