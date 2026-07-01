@@ -142,6 +142,9 @@ out/
 next-env.d.ts
 *.log
 .DS_Store
+.superpowers/
+playwright-report/
+test-results/
 ```
 
 Add scripts to `package.json`:
