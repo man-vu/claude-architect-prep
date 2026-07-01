@@ -23,7 +23,7 @@ export function OptionList({
             className={`flex items-start gap-3 rounded-xl border-2 p-3.5 text-left transition ${cls} disabled:cursor-default`}
           >
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600">{o.letter}</span>
-            <span className="pt-0.5 text-[15px]"><Markdown>{o.text}</Markdown></span>
+            <span className="min-w-0 pt-0.5 text-[15px]"><Markdown>{o.text}</Markdown></span>
           </button>
         );
       })}
