@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Source_Serif_4 } from "next/font/google";
 import { SerwistProvider } from "@serwist/next/react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { TextSizeControl } from "@/components/TextSizeControl";
 
 // Self-hosted at build time by next/font — no runtime CDN, offline-safe for the PWA.
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jbm" });
@@ -31,15 +32,18 @@ export const viewport: Viewport = {
   ],
 };
 
-// Runs before paint so a stored dark preference never flashes light.
-const themeInit = `(function(){try{var t=localStorage.getItem("cca-theme");var d=t==="dark"||((!t||t==="system")&&matchMedia("(prefers-color-scheme: dark)").matches);if(d)document.documentElement.classList.add("dark")}catch(e){}})()`;
+// Runs before paint so stored dark-theme and text-size preferences never flash defaults.
+const themeInit = `(function(){try{var t=localStorage.getItem("cca-theme");var d=t==="dark"||((!t||t==="system")&&matchMedia("(prefers-color-scheme: dark)").matches);if(d)document.documentElement.classList.add("dark");var f=parseFloat(localStorage.getItem("cca-font")||"1");if(f&&f!==1)document.documentElement.style.fontSize=(f*100)+"%"}catch(e){}})()`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${mono.variable} ${serif.variable}`}>
       <head><script dangerouslySetInnerHTML={{ __html: themeInit }} /></head>
       <body className="bg-paper font-serif text-ink antialiased">
-        <ThemeToggle />
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+          <TextSizeControl />
+          <ThemeToggle />
+        </div>
         {pwa ? (
           <SerwistProvider swUrl="/sw.js" disable={process.env.NODE_ENV === "development"}>
             {children}

@@ -37,7 +37,7 @@ function QuestionMap({
               type="button" onClick={() => onJump(idx)}
               aria-label={`Question ${idx + 1}${answered ? ", answered" : ", unanswered"}`}
               aria-current={cur ? "step" : undefined}
-              className={`h-7 w-full rounded-sm border font-mono text-[11px] transition-colors ${cls}`}
+              className={`h-7 w-full rounded-sm border font-mono text-[0.6875rem] transition-colors ${cls}`}
             >
               {idx + 1}
             </button>
@@ -179,8 +179,8 @@ export default function Exam() {
       </aside>
 
       <div>
-        {/* Compact header (mobile shows clock here) */}
-        <div className="mb-4 flex items-center justify-between">
+        {/* Compact header (mobile shows clock here); right padding clears the fixed controls */}
+        <div className="mb-4 flex items-center justify-between pr-40 lg:pr-0">
           <span className="caret font-mono text-sm font-bold text-accent">
             Q{String(i + 1).padStart(2, "0")}/{questions.length}
           </span>
