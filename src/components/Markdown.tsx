@@ -9,7 +9,7 @@ export function Markdown({ children }: { children: string }) {
         remarkPlugins={[remarkGfm]}
         components={{
           code: ({ children }) => (
-            <code className="rounded bg-line/70 px-1 py-0.5 font-mono text-[0.85em] text-ink">{children}</code>
+            <code className="rounded bg-line/70 px-1 py-0.5 font-mono text-[0.85em] text-code">{children}</code>
           ),
           p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
           strong: ({ children }) => <strong className="font-normal text-accent">{children}</strong>,
