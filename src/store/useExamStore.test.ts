@@ -47,6 +47,16 @@ describe("exam store", () => {
     useExamStore.getState().finishSession();
     expect(useExamStore.getState().bestScore()).toBe(1000);
   });
+  it("persists the in-progress session to storage (survives refresh) and clears it on finish", () => {
+    useExamStore.getState().startSession("exam", [q("1"), q("2")]);
+    useExamStore.getState().answer("1", "A");
+    const stored = JSON.parse(localStorage.getItem("cca-prep")!);
+    expect(stored.state.session).not.toBeNull();
+    expect(stored.state.session.answers).toEqual({ "1": "A" });
+    useExamStore.getState().finishSession();
+    const after = JSON.parse(localStorage.getItem("cca-prep")!);
+    expect(after.state.session).toBeNull();
+  });
   it("caps stored history at 50", () => {
     for (let i = 0; i < 55; i++) {
       useExamStore.getState().startSession("practice", [q("x")]);

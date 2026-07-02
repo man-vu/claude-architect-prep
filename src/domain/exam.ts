@@ -1,5 +1,8 @@
 import type { ExamConfig, Question, ScenarioId } from "./types";
 
+// Real exam: 60 questions in 120 minutes.
+export const EXAM_DURATION_MINUTES = 120;
+
 function shuffle<T>(arr: T[], rng: () => number): T[] {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {

@@ -61,6 +61,7 @@ export const useExamStore = create<ExamState>()(
         return scores.length ? Math.max(...scores) : null;
       },
     }),
-    { name: "cca-prep", partialize: (s) => ({ attempts: s.attempts }) },
+    // session is persisted so an in-progress exam survives refresh/close (resumed by the exam page).
+    { name: "cca-prep", partialize: (s) => ({ attempts: s.attempts, session: s.session }) },
   ),
 );

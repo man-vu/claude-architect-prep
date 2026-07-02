@@ -1,8 +1,8 @@
 export function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-white p-5 text-center shadow-sm">
-      <div className="text-3xl font-extrabold text-blue-700">{value}</div>
-      <div className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+    <div className="rounded-md border border-line bg-card p-5 text-center">
+      <div className="font-mono text-3xl font-bold text-ink">{value}</div>
+      <div className="mt-1 font-mono text-[11px] font-medium uppercase tracking-widest text-ink-soft">{label}</div>
     </div>
   );
 }

@@ -1,4 +1,48 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+/* "Terminal Scholar" — warm paper, near-black ink, terracotta accent.
+   Mono for structure/labels, serif for question prose. */
+@theme {
+  --color-paper: #faf8f3;
+  --color-card: #fffdf8;
+  --color-ink: #1c1b22;
+  --color-ink-soft: #5c5a66;
+  --color-line: #e6e0d3;
+  --color-accent: #b0492e; /* AA on paper for small text */
+  --color-accent-soft: #f6e7e0;
+  --color-ok: #3c6e47;
+  --color-ok-soft: #e9f0e6;
+  --color-bad: #a63d33;
+  --color-bad-soft: #f7e8e4;
+  --font-mono: var(--font-jbm), ui-monospace, "Cascadia Mono", monospace;
+  --font-serif: var(--font-ss4), Georgia, "Times New Roman", serif;
+}
+
 :root { color-scheme: light; }
 html, body { height: 100%; }
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Single high-impact motion: question advance. */
+@keyframes q-slide {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: none; }
+}
+.q-enter { animation: q-slide 140ms ease-out; }
+
+/* Blinking prompt caret — the app's signature mark. */
+.caret::after {
+  content: "▊";
+  margin-left: 0.15em;
+  animation: caret-blink 1.2s steps(2, start) infinite;
+}
+@keyframes caret-blink { 50% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .q-enter { animation: none; }
+  .caret::after { animation: none; }
+}

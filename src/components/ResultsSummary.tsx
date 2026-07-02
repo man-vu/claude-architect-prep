@@ -11,35 +11,38 @@ export function ResultsSummary({ attempt, questions }: { attempt: Attempt; quest
   const domainBd = computeBreakdown(attempt.results, byId, "domain");
   const scenarioBd = computeBreakdown(attempt.results, byId, "scenario");
   const wrong = attempt.results.filter((r) => !r.correct);
+  const rowCls = "flex justify-between rounded-md border border-line bg-card px-4 py-2 text-sm";
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-extrabold">{attempt.passed ? "Passed 🎉" : "Not yet"}</h1>
+      <h1 className={`font-mono text-2xl font-bold tracking-tight ${attempt.passed ? "text-ok" : "text-ink"}`}>
+        {attempt.passed ? "▸ Passed" : "▸ Not yet"}
+      </h1>
       <div className="mt-4 grid grid-cols-3 gap-4">
         <Stat label="Score" value={String(attempt.scaledScore)} />
         <Stat label="Correct" value={`${correct}/${attempt.results.length}`} />
         <Stat label="Result" value={attempt.passed ? "PASS" : "FAIL"} />
       </div>
-      <h2 className="mt-8 text-lg font-bold">By domain</h2>
+      <h2 className="mt-8 font-mono text-xs font-bold uppercase tracking-widest text-ink-soft">▸ By domain</h2>
       <ul className="mt-2 space-y-1">
         {domainBd.map((b) => (
-          <li key={b.key} className="flex justify-between rounded-lg bg-white px-4 py-2 text-sm shadow-sm">
+          <li key={b.key} className={rowCls}>
             <span>{DOMAINS[b.key as keyof typeof DOMAINS]?.label ?? b.key}</span>
-            <span className="font-semibold">{b.correct}/{b.total} · {b.pct}%</span>
+            <span className="font-mono font-semibold">{b.correct}/{b.total} · {b.pct}%</span>
           </li>
         ))}
       </ul>
-      <h2 className="mt-8 text-lg font-bold">By scenario</h2>
+      <h2 className="mt-8 font-mono text-xs font-bold uppercase tracking-widest text-ink-soft">▸ By scenario</h2>
       <ul className="mt-2 space-y-1">
         {scenarioBd.map((b) => (
-          <li key={b.key} className="flex justify-between rounded-lg bg-white px-4 py-2 text-sm shadow-sm">
+          <li key={b.key} className={rowCls}>
             <span>{SCENARIOS[b.key as keyof typeof SCENARIOS]?.label ?? b.key}</span>
-            <span className="font-semibold">{b.correct}/{b.total} · {b.pct}%</span>
+            <span className="font-mono font-semibold">{b.correct}/{b.total} · {b.pct}%</span>
           </li>
         ))}
       </ul>
       {wrong.length > 0 && (
         <>
-          <h2 className="mt-8 text-lg font-bold">Review ({wrong.length} missed)</h2>
+          <h2 className="mt-8 font-mono text-xs font-bold uppercase tracking-widest text-ink-soft">▸ Review ({wrong.length} missed)</h2>
           <div className="mt-3 space-y-8">
             {wrong.map((r) => {
               const q = byId.get(r.questionId)!;

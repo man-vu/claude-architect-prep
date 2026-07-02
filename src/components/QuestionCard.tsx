@@ -1,6 +1,7 @@
 "use client";
 import type { Letter, Question } from "@/domain/types";
 import { SCENARIOS } from "@/content/scenarios";
+import { situationRepeatsQuestion } from "@/domain/text";
 import { Markdown } from "./Markdown";
 import { OptionList } from "./OptionList";
 import { Explanation } from "./Explanation";
@@ -10,15 +11,19 @@ export function QuestionCard({
 }: {
   question: Question; revealed: boolean; selected: Letter | null; onSelect: (l: Letter) => void;
 }) {
+  // Some questions restate the ask at the end of the situation — render it once.
+  const askShownInSituation = situationRepeatsQuestion(question.situation, question.question);
   return (
     <div className="mx-auto max-w-3xl">
-      <span className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-blue-700">
-        {SCENARIOS[question.scenario].label}
+      <span className="font-mono text-xs font-bold uppercase tracking-widest text-accent">
+        ▸ {SCENARIOS[question.scenario].label}
       </span>
-      <div className="my-4 rounded-xl border border-blue-100 bg-white p-4 text-[16px] font-medium shadow-sm">
+      <div className="my-4 rounded-md border border-line bg-card p-4 text-[16px]">
         <Markdown>{question.situation}</Markdown>
       </div>
-      <div className="mb-4 text-[17px] font-bold"><Markdown>{question.question}</Markdown></div>
+      {!askShownInSituation && (
+        <div className="mb-4 text-[17px] font-bold"><Markdown>{question.question}</Markdown></div>
+      )}
       <OptionList
         options={question.options} selected={selected} correct={question.correct}
         revealed={revealed} onSelect={onSelect}

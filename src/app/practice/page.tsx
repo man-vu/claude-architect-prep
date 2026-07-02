@@ -27,32 +27,32 @@ export default function Practice() {
     }
   }, []);
 
+  const topicCls = "rounded-md border border-line bg-card p-4 text-left transition-colors hover:border-ink-soft disabled:opacity-40";
+
   if (!filter) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-10">
-        <Link href="/" className="text-sm text-blue-700">← Home</Link>
-        <h1 className="mt-3 text-2xl font-bold">Practice by scenario</h1>
+        <Link href="/" className="font-mono text-sm text-accent hover:underline">← Home</Link>
+        <h1 className="mt-3 font-mono text-2xl font-bold tracking-tight">Practice by scenario</h1>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {(Object.keys(SCENARIOS) as ScenarioId[]).map((s) => {
             const n = allQuestions.filter((q) => q.scenario === s).length;
             return (
-              <button key={s} disabled={n === 0} onClick={() => { setFilter({ kind: "scenario", id: s }); setI(0); setSelected(null); }}
-                className="rounded-xl border-2 border-slate-200 bg-white p-4 text-left hover:bg-slate-50 disabled:opacity-40">
-                <div className="font-semibold">{SCENARIOS[s].label}</div>
-                <div className="text-xs text-slate-500">{n} questions</div>
+              <button key={s} disabled={n === 0} onClick={() => { setFilter({ kind: "scenario", id: s }); setI(0); setSelected(null); }} className={topicCls}>
+                <div className="font-mono text-sm font-semibold">{SCENARIOS[s].label}</div>
+                <div className="mt-0.5 font-mono text-xs text-ink-soft">{n} questions</div>
               </button>
             );
           })}
         </div>
-        <h2 className="mt-8 text-2xl font-bold">Practice by domain</h2>
+        <h2 className="mt-8 font-mono text-2xl font-bold tracking-tight">Practice by domain</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {(Object.keys(DOMAINS) as Domain[]).map((d) => {
             const n = allQuestions.filter((q) => q.domain === d).length;
             return (
-              <button key={d} disabled={n === 0} onClick={() => { setFilter({ kind: "domain", id: d }); setI(0); setSelected(null); }}
-                className="rounded-xl border-2 border-slate-200 bg-white p-4 text-left hover:bg-slate-50 disabled:opacity-40">
-                <div className="font-semibold">{DOMAINS[d].label}</div>
-                <div className="text-xs text-slate-500">{n} questions · weight {DOMAINS[d].weight}%</div>
+              <button key={d} disabled={n === 0} onClick={() => { setFilter({ kind: "domain", id: d }); setI(0); setSelected(null); }} className={topicCls}>
+                <div className="font-mono text-sm font-semibold">{DOMAINS[d].label}</div>
+                <div className="mt-0.5 font-mono text-xs text-ink-soft">{n} questions · weight {DOMAINS[d].weight}%</div>
               </button>
             );
           })}
@@ -65,16 +65,18 @@ export default function Practice() {
   return (
     <main className="px-6 py-8">
       <div className="mx-auto mb-4 flex max-w-3xl items-center justify-between">
-        <button onClick={() => setFilter(null)} className="text-sm text-blue-700">← Change topic</button>
-        <span className="text-sm text-slate-500">{i + 1} / {pool.length}</span>
+        <button onClick={() => setFilter(null)} className="font-mono text-sm text-accent hover:underline">← Change topic</button>
+        <span className="caret font-mono text-sm font-bold text-accent">Q{String(i + 1).padStart(2, "0")}/{pool.length}</span>
       </div>
       {q && (
-        <QuestionCard question={q} revealed={selected !== null} selected={selected} onSelect={setSelected} />
+        <div key={q.id} className="q-enter">
+          <QuestionCard question={q} revealed={selected !== null} selected={selected} onSelect={setSelected} />
+        </div>
       )}
       <div className="mx-auto mt-6 flex max-w-3xl justify-end">
         <button disabled={selected === null || i + 1 >= pool.length}
           onClick={() => { setI(i + 1); setSelected(null); }}
-          className="rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white disabled:opacity-40">Next</button>
+          className="rounded-md bg-ink px-6 py-2.5 font-mono text-sm font-semibold text-paper transition-colors hover:bg-accent disabled:opacity-40">Next →</button>
       </div>
     </main>
   );
