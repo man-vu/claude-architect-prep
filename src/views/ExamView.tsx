@@ -1,12 +1,14 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { allQuestions } from "@/content/questions";
 import { composeExam, EXAM_DURATION_MINUTES } from "@/domain/exam";
 import type { Attempt, Letter, Question } from "@/domain/types";
 import { useExamStore } from "@/store/useExamStore";
 import { QuestionCard } from "@/components/QuestionCard";
 import { ResultsSummary } from "@/components/ResultsSummary";
+import { useT, useLocale } from "@/i18n/LocaleProvider";
+import { localeHref } from "@/i18n/locales";
+import { getQuestions } from "@/content/i18n";
 
 function formatClock(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -23,6 +25,7 @@ function QuestionMap({
 }: {
   questions: Question[]; answers: Record<string, Letter>; current: number; onJump: (i: number) => void;
 }) {
+  const t = useT();
   return (
     <ol className="grid grid-cols-10 gap-1 lg:grid-cols-6">
       {questions.map((q, idx) => {
@@ -35,7 +38,7 @@ function QuestionMap({
           <li key={q.id}>
             <button
               type="button" onClick={() => onJump(idx)}
-              aria-label={`Question ${idx + 1}${answered ? ", answered" : ", unanswered"}`}
+              aria-label={t.exam.questionAria(idx + 1, answered)}
               aria-current={cur ? "step" : undefined}
               className={`h-7 w-full rounded-sm border font-mono text-[0.6875rem] transition-colors ${cls}`}
             >
@@ -48,7 +51,9 @@ function QuestionMap({
   );
 }
 
-export default function Exam() {
+export function ExamView() {
+  const t = useT();
+  const locale = useLocale();
   const [questions, setQuestions] = useState<Question[] | null>(null);
   const [i, setI] = useState(0);
   const [answers, setAnswers] = useState<Record<string, Letter>>({});
@@ -72,11 +77,12 @@ export default function Exam() {
       const firstOpen = s.questions.findIndex((q) => !(q.id in s.answers));
       setI(firstOpen === -1 ? 0 : firstOpen);
     } else {
-      const qs = composeExam(allQuestions, { scenarioCount: 4, perScenario: 15 });
+      const qs = composeExam(getQuestions(locale), { scenarioCount: 4, perScenario: 15 });
       setQuestions(qs);
       startSession("exam", qs);
       setStartedAt(Date.now());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startSession]);
 
   const submit = useCallback(() => {
@@ -89,8 +95,8 @@ export default function Exam() {
   const remaining = deadline !== null ? deadline - now : null;
   useEffect(() => {
     if (startedAt === null || attempt) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
   }, [startedAt, attempt]);
   useEffect(() => {
     if (remaining !== null && remaining <= 0 && questions && !attempt) submit();
@@ -120,7 +126,7 @@ export default function Exam() {
   if (!questions) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-10 font-mono text-sm text-ink-soft">
-        <span className="spin mr-1.5 inline-block text-accent">◐</span>Preparing your exam…
+        <span className="spin mr-1.5 inline-block text-accent">◐</span>{t.exam.preparingExam}
       </main>
     );
   }
@@ -129,7 +135,7 @@ export default function Exam() {
     return (
       <main className="px-6 py-8">
         <ResultsSummary attempt={attempt} questions={questions} />
-        <div className="mx-auto mt-8 max-w-3xl"><Link href="/" className="font-mono text-sm text-accent hover:underline">← Home</Link></div>
+        <div className="mx-auto mt-8 max-w-3xl"><Link href={localeHref(locale, "/")} className="font-mono text-sm text-accent hover:underline">{t.exam.home}</Link></div>
       </main>
     );
   }
@@ -143,7 +149,7 @@ export default function Exam() {
     <div className="flex flex-col gap-2">
       {confirming && (
         <p role="alert" className="rounded-md border border-accent bg-accent-soft p-3 font-mono text-xs text-ink">
-          {unanswered} unanswered. Submit anyway?
+          {t.exam.unansweredConfirm(unanswered)}
         </p>
       )}
       <button
@@ -151,21 +157,21 @@ export default function Exam() {
         onClick={() => (unanswered > 0 && !confirming ? setConfirming(true) : submit())}
         className="rounded-md bg-ink px-5 py-2.5 font-mono text-sm font-semibold text-paper transition-colors hover:bg-accent"
       >
-        {confirming ? "Submit now" : "Finish exam"}
+        {confirming ? t.exam.submitNow : t.exam.finishExam}
       </button>
       {confirming && (
         <button type="button" onClick={() => setConfirming(false)} className="rounded-md border border-line bg-card px-5 py-2 font-mono text-xs hover:border-ink-soft">
-          Keep going
+          {t.exam.keepGoing}
         </button>
       )}
-      <Link href="/" className="mt-1 text-center font-mono text-xs text-ink-soft hover:text-accent">
-        Save & exit — progress is kept
+      <Link href={localeHref(locale, "/")} className="mt-1 text-center font-mono text-xs text-ink-soft hover:text-accent">
+        {t.exam.saveExit}
       </Link>
     </div>
   );
 
   const clock = remaining !== null && (
-    <div className={`font-mono text-2xl font-bold tabular-nums ${lowTime ? "pulse-soft text-bad" : "text-ink"}`} aria-label="Time remaining">
+    <div className={`font-mono text-2xl font-bold tabular-nums ${lowTime ? "pulse-soft text-bad" : "text-ink"}`} aria-label={t.exam.timeRemaining}>
       {formatClock(remaining)}
     </div>
   );
@@ -176,7 +182,7 @@ export default function Exam() {
       <aside className="hidden lg:block">
         <div className="sticky top-6 flex flex-col gap-5">
           {clock}
-          <div aria-live="polite" className="font-mono text-xs text-ink-soft">{answered}/{questions.length} answered</div>
+          <div aria-live="polite" className="font-mono text-xs text-ink-soft">{t.exam.answeredCount(answered)} / {questions.length}</div>
           <QuestionMap questions={questions} answers={answers} current={i} onJump={(idx) => setI(idx)} />
           {finishBlock}
         </div>
@@ -186,17 +192,17 @@ export default function Exam() {
         {/* Compact header (mobile shows clock here); right padding clears the fixed controls */}
         <div className="mb-4 flex items-center justify-between pr-40 lg:pr-0">
           <span className="caret font-mono text-sm font-bold text-accent">
-            Q{String(i + 1).padStart(2, "0")}/{questions.length}
+            {t.exam.questionCounter(i + 1, questions.length)}
           </span>
           <div className="flex items-center gap-4">
-            <span aria-live="polite" className="font-mono text-xs text-ink-soft lg:hidden">{answered} answered</span>
+            <span aria-live="polite" className="font-mono text-xs text-ink-soft lg:hidden">{t.exam.answeredCount(answered)}</span>
             <span className="lg:hidden">{clock}</span>
           </div>
         </div>
 
         {/* Mobile question map + finish */}
         <details className="mb-4 rounded-md border border-line bg-card p-3 lg:hidden">
-          <summary className="cursor-pointer font-mono text-xs font-semibold uppercase tracking-widest text-ink-soft">Question map</summary>
+          <summary className="cursor-pointer font-mono text-xs font-semibold uppercase tracking-widest text-ink-soft">{t.exam.questionMap}</summary>
           <div className="mt-3 flex flex-col gap-3">
             <QuestionMap questions={questions} answers={answers} current={i} onJump={(idx) => setI(idx)} />
             {finishBlock}
@@ -213,15 +219,15 @@ export default function Exam() {
             disabled={i === 0} onClick={() => setI(i - 1)}
             className="theme-smooth rounded-md border border-line bg-card px-5 py-2.5 font-mono text-sm font-semibold transition-colors hover:border-ink-soft disabled:opacity-40"
           >
-            ← Prev
+            {t.exam.prev}
           </button>
           {i + 1 < questions.length ? (
             <button onClick={() => setI(i + 1)} className="arrow-nudge rounded-md bg-ink px-6 py-2.5 font-mono text-sm font-semibold text-paper transition-colors hover:bg-accent">
-              Next <span className="arrow">→</span>
+              {t.exam.next} <span className="arrow">→</span>
             </button>
           ) : (
             <button onClick={() => (unanswered > 0 && !confirming ? setConfirming(true) : submit())} className="rounded-md bg-ink px-6 py-2.5 font-mono text-sm font-semibold text-paper transition-colors hover:bg-accent">
-              {confirming ? "Submit now" : "Finish exam"}
+              {confirming ? t.exam.submitNow : t.exam.finishExam}
             </button>
           )}
         </div>

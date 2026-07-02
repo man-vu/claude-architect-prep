@@ -1,24 +1,27 @@
 "use client";
 import type { Letter, Question } from "@/domain/types";
-import { SCENARIOS } from "@/content/scenarios";
 import { situationRepeatsQuestion } from "@/domain/text";
 import { Markdown } from "./Markdown";
 import { OptionList } from "./OptionList";
 import { Explanation } from "./Explanation";
 import { AudioButton } from "./AudioButton";
+import { useT, useLocale } from "@/i18n/LocaleProvider";
+import { getScenarioLabel } from "@/content/i18n";
 
 export function QuestionCard({
   question, revealed, selected, onSelect,
 }: {
   question: Question; revealed: boolean; selected: Letter | null; onSelect: (l: Letter) => void;
 }) {
+  const t = useT();
+  const locale = useLocale();
   // Some questions restate the ask at the end of the situation — render it once.
   const askShownInSituation = situationRepeatsQuestion(question.situation, question.question);
   return (
     <div className="mx-auto max-w-3xl">
       <div className="flex items-center justify-between gap-3">
         <span className="font-mono text-xs font-bold uppercase tracking-widest text-accent">
-          ▸ {SCENARIOS[question.scenario].label}
+          {t.common.scenarioChip(getScenarioLabel(locale, question.scenario))}
         </span>
         <AudioButton id={`q-${question.id}`} />
       </div>

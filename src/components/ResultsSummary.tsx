@@ -1,10 +1,12 @@
 "use client";
 import type { Attempt, Question } from "@/domain/types";
-import { DOMAINS, SCENARIOS } from "@/content/scenarios";
 import { computeBreakdown } from "@/domain/scoring";
 import type { BreakdownEntry } from "@/domain/types";
 import { Stat } from "./Stat";
 import { QuestionCard } from "./QuestionCard";
+import { useT, useLocale } from "@/i18n/LocaleProvider";
+import { getDomainLabel, getScenarioLabel } from "@/content/i18n";
+import type { Domain, ScenarioId } from "@/domain/types";
 
 function BreakdownRow({ entry, label, delayMs }: { entry: BreakdownEntry; label: string; delayMs: number }) {
   return (
@@ -24,6 +26,8 @@ function BreakdownRow({ entry, label, delayMs }: { entry: BreakdownEntry; label:
 }
 
 export function ResultsSummary({ attempt, questions }: { attempt: Attempt; questions: Question[] }) {
+  const t = useT();
+  const locale = useLocale();
   const byId = new Map(questions.map((q) => [q.id, q]));
   const correct = attempt.results.filter((r) => r.correct).length;
   const domainBd = computeBreakdown(attempt.results, byId, "domain");
@@ -32,28 +36,28 @@ export function ResultsSummary({ attempt, questions }: { attempt: Attempt; quest
   return (
     <div className="page-enter mx-auto max-w-3xl">
       <h1 className={`stamp font-mono text-2xl font-bold tracking-tight ${attempt.passed ? "text-ok" : "text-ink"}`}>
-        {attempt.passed ? "▸ Passed" : "▸ Not yet"}
+        {attempt.passed ? t.exam.passed : t.exam.notYet}
       </h1>
       <div className="mt-4 grid grid-cols-3 gap-4">
-        <Stat label="Score" value={String(attempt.scaledScore)} />
-        <Stat label="Correct" value={`${correct}/${attempt.results.length}`} />
-        <Stat label="Result" value={attempt.passed ? "PASS" : "FAIL"} />
+        <Stat label={t.exam.score} value={String(attempt.scaledScore)} />
+        <Stat label={t.exam.correct} value={`${correct}/${attempt.results.length}`} />
+        <Stat label={t.exam.result} value={attempt.passed ? t.exam.pass : t.exam.fail} />
       </div>
-      <h2 className="mt-8 font-mono text-xs font-bold uppercase tracking-widest text-ink-soft">▸ By domain</h2>
+      <h2 className="mt-8 font-mono text-xs font-bold uppercase tracking-widest text-ink-soft">{t.exam.byDomain}</h2>
       <ul className="mt-2 space-y-1">
         {domainBd.map((b, idx) => (
-          <BreakdownRow key={b.key} entry={b} delayMs={idx * 90} label={DOMAINS[b.key as keyof typeof DOMAINS]?.label ?? b.key} />
+          <BreakdownRow key={b.key} entry={b} delayMs={idx * 90} label={getDomainLabel(locale, b.key as Domain)} />
         ))}
       </ul>
-      <h2 className="mt-8 font-mono text-xs font-bold uppercase tracking-widest text-ink-soft">▸ By scenario</h2>
+      <h2 className="mt-8 font-mono text-xs font-bold uppercase tracking-widest text-ink-soft">{t.exam.byScenario}</h2>
       <ul className="mt-2 space-y-1">
         {scenarioBd.map((b, idx) => (
-          <BreakdownRow key={b.key} entry={b} delayMs={idx * 90} label={SCENARIOS[b.key as keyof typeof SCENARIOS]?.label ?? b.key} />
+          <BreakdownRow key={b.key} entry={b} delayMs={idx * 90} label={getScenarioLabel(locale, b.key as ScenarioId)} />
         ))}
       </ul>
       {wrong.length > 0 && (
         <>
-          <h2 className="mt-8 font-mono text-xs font-bold uppercase tracking-widest text-ink-soft">▸ Review ({wrong.length} missed)</h2>
+          <h2 className="mt-8 font-mono text-xs font-bold uppercase tracking-widest text-ink-soft">{t.exam.review(wrong.length)}</h2>
           <div className="mt-3 space-y-8">
             {wrong.map((r) => {
               const q = byId.get(r.questionId)!;

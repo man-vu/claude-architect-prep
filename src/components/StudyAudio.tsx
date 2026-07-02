@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { AUDIO, audioUrl } from "@/content/audio";
 import { claimAudio, releaseAudio } from "./audioBus";
+import { useT } from "@/i18n/LocaleProvider";
 
 function fmt(secs: number): string {
   const s = Math.max(0, Math.round(secs));
@@ -21,8 +22,10 @@ const CLOSED_OFFSET = DRAWER_W + TAB_W;
  *  edge (simple `right: 0`, never itself moved — avoids the fragile negative-offset
  *  math that can leave a gap depending on how a browser measures the viewport).
  *  Tap it, or drag it left, to open the drawer. Selecting a section scrolls the
- *  article to that heading and starts narrating it. */
+ *  article to that heading and starts narrating it. Renders nothing when there's no
+ *  narration for this slug — narration is English-only, so this hides on translations. */
 export function StudyAudio({ slug }: { slug: string }) {
+  const t = useT();
   const sections = Object.entries(AUDIO)
     .filter(([id]) => id.startsWith(`s-${slug}-`))
     .sort(([a], [b]) => a.localeCompare(b));
@@ -106,7 +109,7 @@ export function StudyAudio({ slug }: { slug: string }) {
     <>
       {open && (
         <button
-          type="button" aria-label="Close audio panel" onClick={() => setOpen(false)}
+          type="button" aria-label={t.audio.closePanel} onClick={() => setOpen(false)}
           className="fixed inset-0 z-40 bg-ink/40"
         />
       )}
@@ -114,12 +117,12 @@ export function StudyAudio({ slug }: { slug: string }) {
       <button
         type="button"
         aria-expanded={open}
-        aria-label={open ? "Close audio panel" : "Open audio panel"}
+        aria-label={open ? t.audio.closePanel : t.audio.openPanel}
         onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
-        className="theme-smooth fixed top-1/2 right-0 z-[51] flex w-10 -translate-y-1/2 touch-none select-none items-center justify-center rounded-l-md border border-r-0 border-line bg-card py-6 font-mono text-[11px] font-bold tracking-widest text-ink transition-colors hover:bg-accent hover:text-paper"
+        className="theme-smooth fixed top-1/2 right-0 z-[51] flex w-10 -translate-y-1/2 touch-none select-none items-center justify-center rounded-l-md border border-r-0 border-line bg-card py-6 font-mono text-[11px] font-bold tracking-widest text-ink transition-colors hover:bg-accent hover:text-paper rtl:right-auto rtl:left-0 rtl:rounded-l-none rtl:rounded-r-md rtl:border-l rtl:border-r-0"
         style={{ writingMode: "vertical-rl" }}
       >
-        LISTEN
+        {t.audio.tab}
       </button>
       {/* Drawer: a separate fixed element, docked immediately left of the tab, sliding
           via its own transform (0 = open, DRAWER_W = fully hidden behind the tab). */}
@@ -136,8 +139,8 @@ export function StudyAudio({ slug }: { slug: string }) {
           className="w-full rounded-md bg-ink px-4 py-2 font-mono text-xs font-semibold text-paper transition-colors hover:bg-accent disabled:cursor-wait"
         >
           {loading
-            ? <><span className="spin mr-1 inline-block">◐</span>loading…</>
-            : playing ? "❚❚ pause" : currentIdx === null ? `▸ listen to this page ${fmt(total)}` : "▸ resume"}
+            ? <><span className="spin mr-1 inline-block">◐</span>{t.audio.loading}</>
+            : playing ? t.audio.pause : currentIdx === null ? t.audio.listenToPage(fmt(total)) : t.audio.resume}
         </button>
         <ol className="mt-3 space-y-1">
           {sections.map(([id, m], idx) => (
