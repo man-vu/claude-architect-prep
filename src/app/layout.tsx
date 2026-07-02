@@ -11,13 +11,17 @@ const serif = Source_Serif_4({ subsets: ["latin"], variable: "--font-ss4" });
 // The service worker + manifest are wired only for the root deploy. A subpath build
 // (NEXT_PUBLIC_BASE_PATH set, e.g. mavox.ca/cca) ships without them, but keeps the
 // apple-web-app metadata so iOS "Add to Home Screen" still installs it standalone.
-const pwa = !process.env.NEXT_PUBLIC_BASE_PATH;
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const pwa = !basePath;
 
 export const metadata: Metadata = {
   title: "Claude Certified Architect — Practice Exam",
   description: "Practice exam for the Claude Certified Architect — Foundations certification.",
   appleWebApp: { capable: true, title: "CCA Prep", statusBarStyle: "default" },
-  icons: { apple: "/icons/apple-touch-icon.png" },
+  // Next does not basePath-prefix metadata icon URLs — prefix explicitly for subpath builds.
+  icons: { apple: `${basePath}/icons/apple-touch-icon.png` },
+  // Older iOS only honors the apple-prefixed tag (Next emits the modern one).
+  other: { "apple-mobile-web-app-capable": "yes" },
   ...(pwa ? { manifest: "/manifest.webmanifest" } : {}),
 };
 export const viewport: Viewport = {
