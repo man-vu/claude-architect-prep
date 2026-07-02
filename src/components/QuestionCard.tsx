@@ -22,11 +22,11 @@ export function QuestionCard({
         </span>
         <AudioButton id={`q-${question.id}`} />
       </div>
-      <div className="my-4 rounded-md border border-line bg-card p-4 text-[16px]">
+      <div className="my-4 rounded-md border border-line bg-card p-4 text-[1rem]">
         <Markdown>{question.situation}</Markdown>
       </div>
       {!askShownInSituation && (
-        <div className="mb-4 text-[17px] font-bold"><Markdown>{question.question}</Markdown></div>
+        <div className="mb-4 text-[1.0625rem] font-bold"><Markdown>{question.question}</Markdown></div>
       )}
       <OptionList
         options={question.options} selected={selected} correct={question.correct}

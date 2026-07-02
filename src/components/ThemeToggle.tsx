@@ -31,7 +31,7 @@ export function ThemeToggle() {
     return () => mq.removeEventListener("change", onChange);
   }, [mode]);
 
-  if (mode === null) return <div className="h-9 w-24" aria-hidden />;
+  if (mode === null) return <div className="h-8 w-12" aria-hidden />;
   const next = ORDER[(ORDER.indexOf(mode) + 1) % ORDER.length];
   return (
     <button
@@ -39,9 +39,9 @@ export function ThemeToggle() {
       onClick={() => setMode(next)}
       title={`Theme: ${mode} — switch to ${next}`}
       aria-label={`Theme: ${mode}. Switch to ${next}.`}
-      className="theme-smooth fixed top-4 right-4 z-50 rounded-md border border-line bg-card px-3 py-1.5 font-mono text-xs font-semibold text-ink-soft transition-colors hover:border-ink-soft hover:text-ink"
+      className="theme-smooth rounded-md border border-line bg-card px-3 py-1.5 font-mono text-xs font-semibold text-ink-soft transition-colors hover:border-ink-soft hover:text-ink"
     >
-      {GLYPH[mode]} {mode}
+      {GLYPH[mode]}<span className="hidden sm:inline"> {mode}</span>
     </button>
   );
 }

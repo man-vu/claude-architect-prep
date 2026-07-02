@@ -19,7 +19,7 @@ export function TheoryCard({
         </span>
         <AudioButton id={`q-${question.id}`} />
       </div>
-      <div className="my-4 text-[17px] font-bold"><Markdown>{question.question}</Markdown></div>
+      <div className="my-4 text-[1.0625rem] font-bold"><Markdown>{question.question}</Markdown></div>
       <OptionList
         options={question.options} selected={selected} correct={question.correct}
         revealed={revealed} onSelect={onSelect}

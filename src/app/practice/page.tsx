@@ -73,7 +73,7 @@ export default function Practice() {
 
   return (
     <main className="px-6 py-8">
-      <div className="mx-auto mb-4 flex max-w-3xl items-center justify-between">
+      <div className="mx-auto mb-4 flex max-w-3xl items-center justify-between pr-40 lg:pr-0">
         <button onClick={() => setFilter(null)} className="font-mono text-sm text-accent hover:underline">← Change topic</button>
         <span className="caret font-mono text-sm font-bold text-accent">Q{String(i + 1).padStart(2, "0")}/{poolLength}</span>
       </div>
