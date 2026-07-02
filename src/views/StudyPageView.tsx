@@ -23,9 +23,15 @@ export async function StudyPageView({ locale, slug }: { locale: string; slug: st
           transform on the element, which creates a new containing block for any
           position:fixed descendant — breaking the audio drawer's viewport docking. */}
       <StudyAudio slug={slug} />
+      <Link
+        href={href("/study")}
+        aria-label={t.study.allTopics}
+        className="theme-smooth fixed top-4 left-4 z-[51] rounded-md border border-line bg-card px-3 py-2 font-mono text-xs font-semibold text-accent shadow-md transition-colors hover:bg-accent hover:text-paper rtl:right-4 rtl:left-auto"
+      >
+        {t.study.back}
+      </Link>
       <main className="page-enter mx-auto max-w-3xl px-6 py-10">
-        <Link href={href("/study")} className="font-mono text-sm text-accent hover:underline">{t.study.back}</Link>
-        <div className="mt-3 mb-6">
+        <div className="mb-6">
           <span className="font-mono text-xs font-bold uppercase tracking-widest text-accent">
             {page.group === "domain" ? t.study.domainWeight(page.weight!) : t.study.referenceTag}
           </span>
