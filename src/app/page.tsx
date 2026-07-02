@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useExamStore } from "@/store/useExamStore";
 import { Stat } from "@/components/Stat";
+import { Intro } from "@/components/Intro";
 
 export default function Home() {
   const attempts = useExamStore((s) => s.attempts);
@@ -18,6 +19,7 @@ export default function Home() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
+      <Intro />
       <p className="rise font-mono text-xs font-bold uppercase tracking-widest text-accent">▸ Foundations certification prep</p>
       <h1 className="caret rise rise-1 mt-2 font-mono text-3xl font-bold tracking-tight sm:text-4xl">Claude Certified Architect</h1>
       <p className="rise rise-1 mt-3 text-ink-soft">Score 100–1000 · pass at 720 · 60 questions in 120 minutes.</p>
