@@ -3,6 +3,14 @@ import { createContext, useContext } from "react";
 import type { UiDict } from "./ui";
 import { getDict } from "./dict-registry";
 import { localeDir } from "./locales";
+// Next.js compiles server and client components into SEPARATE module graphs, even
+// during static export. content/i18n/register.ts's side effect only reached the
+// server bundle when imported solely from [locale]/layout.tsx (a server component)
+// -- client components (HomeView, PracticeView, ExamView, ...) got an entirely
+// separate, never-populated copy of the same registry modules. Importing the
+// side effect here, inside the client component every locale route actually
+// renders, guarantees it runs in whichever bundle is consuming it.
+import "@/content/i18n/register";
 
 interface LocaleCtx { locale: string; t: UiDict; dir: "ltr" | "rtl" }
 const LocaleContext = createContext<LocaleCtx | null>(null);
