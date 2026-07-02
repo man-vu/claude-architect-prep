@@ -19,6 +19,13 @@
   --color-bad: #a63d33;
   --color-bad-soft: #f7e8e4;
   --color-code: #0f6e68; /* teal, distinct from accent/ok/bad; AA on paper */
+  /* Code-block syntax colors: the panel background is always dark (bg-ink/bg-card),
+     regardless of site theme, so these use fixed bright values rather than swapping
+     with .dark like the tokens above. */
+  --color-code-keyword: #e08a63;
+  --color-code-string: #e0b563;
+  --color-code-comment: #a09aac;
+  --color-code-ident: #5fc9bb;
   --font-mono: var(--font-jbm), ui-monospace, "Cascadia Mono", monospace;
   --font-serif: var(--font-ss4), Georgia, "Times New Roman", serif;
 }
@@ -69,6 +76,22 @@ body, .theme-smooth { transition: background-color 250ms ease, color 250ms ease,
    code inside pre blocks, which already gets its own color from prose-pre above. */
 .prose code:not(pre code), .prose-sm code:not(pre code) {
   color: var(--color-code);
+}
+
+/* Syntax highlighting inside code blocks, via rehype-highlight's hljs- classes.
+   Lower-signal tokens (punctuation, params, meta) are left at the default light-on-
+   dark panel color, so the highlighted tokens actually stand out. */
+.prose .hljs-keyword, .prose .hljs-literal {
+  color: var(--color-code-keyword);
+}
+.prose .hljs-string, .prose .hljs-number {
+  color: var(--color-code-string);
+}
+.prose .hljs-comment {
+  color: var(--color-code-comment);
+}
+.prose .hljs-built_in, .prose .hljs-title, .prose .hljs-attr {
+  color: var(--color-code-ident);
 }
 
 /* ── Motion library ─────────────────────────────────────────────── */

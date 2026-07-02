@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { AUDIO, audioUrl } from "@/content/audio";
 import { claimAudio, releaseAudio } from "./audioBus";
 
@@ -8,8 +9,12 @@ function fmt(secs: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-/** Per-section narration playlist for a study page; auto-advances between
- *  sections so a whole page can be listened to hands-free. */
+const DRAWER_W = 300; // px — kept in sync with the inline width below
+const TAB_W = 40;
+
+/** Edge-docked audio channel: a slim "LISTEN" tab always visible at the right edge.
+ *  Tap it, or drag it left, to open the drawer. Selecting a section scrolls the
+ *  article to that heading and starts narrating it. */
 export function StudyAudio({ slug }: { slug: string }) {
   const sections = Object.entries(AUDIO)
     .filter(([id]) => id.startsWith(`s-${slug}-`))
@@ -17,59 +22,119 @@ export function StudyAudio({ slug }: { slug: string }) {
   const [currentIdx, setCurrentIdx] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLAudioElement | null>(null);
+  const [dragX, setDragX] = useState<number | null>(null); // live translateX while dragging
+  const dragStart = useRef<{ x: number; base: number } | null>(null);
+  const moved = useRef(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  useEffect(() => () => { if (ref.current) releaseAudio(ref.current); }, []);
+  useEffect(() => () => { if (audioRef.current) releaseAudio(audioRef.current); }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   if (sections.length === 0) return null;
   const total = sections.reduce((s, [, m]) => s + m.s, 0);
 
   const playIdx = (idx: number) => {
     if (idx >= sections.length) { setCurrentIdx(null); setPlaying(false); return; }
-    if (ref.current) releaseAudio(ref.current);
+    if (audioRef.current) releaseAudio(audioRef.current);
     const el = new Audio(audioUrl(sections[idx][0])!);
     el.addEventListener("ended", () => playIdx(idx + 1)); // auto-advance
     el.addEventListener("pause", () => setPlaying(false));
     el.addEventListener("play", () => setPlaying(true));
-    ref.current = el;
+    audioRef.current = el;
     setCurrentIdx(idx);
     claimAudio(el);
     void el.play();
   };
 
   const toggleCurrent = () => {
-    const el = ref.current;
+    const el = audioRef.current;
     if (!el) { playIdx(0); return; }
     if (el.paused) { claimAudio(el); void el.play(); } else el.pause();
   };
 
+  const goToSection = (idx: number) => {
+    const [id] = sections[idx];
+    if (idx === 0) window.scrollTo({ top: 0, behavior: "smooth" });
+    else document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    playIdx(idx);
+    setOpen(false);
+  };
+
+  // Drag the tab to open/close; a tap (negligible movement) just toggles.
+  const onPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragStart.current = { x: e.clientX, base: open ? -DRAWER_W : 0 };
+    moved.current = false;
+  };
+  const onPointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!dragStart.current) return;
+    const dx = e.clientX - dragStart.current.x;
+    if (Math.abs(dx) > 4) moved.current = true;
+    setDragX(Math.max(-DRAWER_W, Math.min(0, dragStart.current.base + dx)));
+  };
+  const onPointerUp = () => {
+    if (!dragStart.current) return;
+    if (!moved.current) setOpen((o) => !o);
+    else if (dragX !== null) setOpen(dragX <= -DRAWER_W / 2);
+    dragStart.current = null;
+    setDragX(null);
+  };
+
+  const translate = dragX !== null ? dragX : (open ? -DRAWER_W : 0);
+
   return (
-    <div className="theme-smooth mb-6 rounded-md border border-line bg-card p-3">
-      <div className="flex items-center justify-between gap-3">
-        <button
-          type="button" onClick={toggleCurrent}
-          className="rounded-md bg-ink px-4 py-2 font-mono text-xs font-semibold text-paper transition-colors hover:bg-accent"
-        >
-          {playing ? "❚❚ pause" : currentIdx === null ? `▸ listen to this page ${fmt(total)}` : "▸ resume"}
-        </button>
-        <button type="button" onClick={() => setOpen(!open)} className="font-mono text-xs text-ink-soft hover:text-accent">
-          {open ? "hide sections" : `${sections.length} sections ▾`}
-        </button>
-      </div>
+    <>
       {open && (
-        <ol className="mt-3 space-y-1">
-          {sections.map(([id, m], idx) => (
-            <li key={id}>
-              <button
-                type="button" onClick={() => playIdx(idx)}
-                className={`w-full rounded px-2 py-1 text-left font-mono text-xs transition-colors hover:text-accent ${idx === currentIdx ? "bg-accent-soft text-accent" : "text-ink-soft"}`}
-              >
-                {idx === currentIdx && playing ? "❚❚" : "▸"} {m.t ?? id} · {fmt(m.s)}
-              </button>
-            </li>
-          ))}
-        </ol>
+        <button
+          type="button" aria-label="Close audio panel" onClick={() => setOpen(false)}
+          className="fixed inset-0 z-40 bg-ink/40"
+        />
       )}
-    </div>
+      <div
+        className="fixed top-1/2 z-50 flex select-none items-center"
+        style={{
+          width: DRAWER_W + TAB_W, right: -DRAWER_W,
+          transform: `translateY(-50%) translateX(${translate}px)`,
+          transition: dragX === null ? "transform 220ms ease" : "none",
+        }}
+      >
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-label={open ? "Close audio panel" : "Open audio panel"}
+          onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
+          className="theme-smooth flex w-10 shrink-0 touch-none items-center justify-center rounded-l-md border border-r-0 border-line bg-ink py-6 font-mono text-[11px] font-bold tracking-widest text-paper transition-colors hover:bg-accent"
+          style={{ writingMode: "vertical-rl" }}
+        >
+          LISTEN
+        </button>
+        <div className="theme-smooth max-h-[70vh] w-[300px] overflow-y-auto rounded-r-md border border-l-0 border-line bg-card p-3 shadow-lg">
+          <button
+            type="button" onClick={toggleCurrent}
+            className="w-full rounded-md bg-ink px-4 py-2 font-mono text-xs font-semibold text-paper transition-colors hover:bg-accent"
+          >
+            {playing ? "❚❚ pause" : currentIdx === null ? `▸ listen to this page ${fmt(total)}` : "▸ resume"}
+          </button>
+          <ol className="mt-3 space-y-1">
+            {sections.map(([id, m], idx) => (
+              <li key={id}>
+                <button
+                  type="button" onClick={() => goToSection(idx)}
+                  className={`w-full rounded px-2 py-1 text-left font-mono text-xs transition-colors hover:text-accent ${idx === currentIdx ? "bg-accent-soft text-accent" : "text-ink-soft"}`}
+                >
+                  {idx === currentIdx && playing ? "❚❚" : "▸"} {m.t ?? id} · {fmt(m.s)}
+                </button>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </>
   );
 }
