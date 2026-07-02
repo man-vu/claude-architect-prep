@@ -16,14 +16,15 @@ export function OptionList({
         const isSel = selected === o.letter;
         let cls = "border-line bg-card hover:border-ink-soft";
         let letterCls = "text-ink-soft";
-        if (revealed && o.letter === correct) { cls = "border-ok bg-ok-soft"; letterCls = "text-ok"; }
-        else if (revealed && isSel) { cls = "border-bad bg-bad-soft"; letterCls = "text-bad"; }
-        else if (isSel) { cls = "border-accent bg-accent-soft"; letterCls = "text-accent"; }
+        let anim = "";
+        if (revealed && o.letter === correct) { cls = "border-ok bg-ok-soft"; letterCls = "text-ok"; anim = "reveal-ok"; }
+        else if (revealed && isSel) { cls = "border-bad bg-bad-soft"; letterCls = "text-bad"; anim = "reveal-bad"; }
+        else if (isSel) { cls = "border-accent bg-accent-soft"; letterCls = "text-accent"; anim = "option-pop"; }
         return (
           <button
             key={o.letter} type="button" disabled={revealed} aria-pressed={isSel}
             onClick={() => onSelect(o.letter)}
-            className={`flex items-start gap-3 rounded-md border p-3.5 text-left transition-colors active:scale-[0.995] ${cls} disabled:cursor-default`}
+            className={`theme-smooth flex items-start gap-3 rounded-md border p-3.5 text-left transition-colors active:scale-[0.995] ${cls} ${anim} disabled:cursor-default`}
           >
             <span className={`shrink-0 pt-0.5 font-mono text-sm font-bold ${letterCls}`}>[{o.letter}]</span>
             <span className="min-w-0 pt-0.5 text-[15px]"><Markdown>{o.text}</Markdown></span>

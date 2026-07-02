@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Class-based dark mode: `.dark` on <html> (set by ThemeToggle / no-flash script). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* "Terminal Scholar" — warm paper, near-black ink, terracotta accent.
    Mono for structure/labels, serif for question prose. */
 @theme {
@@ -19,20 +22,53 @@
   --font-serif: var(--font-ss4), Georgia, "Times New Roman", serif;
 }
 
+/* Dark = true terminal: near-black, warm phosphor text, brighter terracotta. */
+.dark {
+  --color-paper: #16151c;
+  --color-card: #1e1d25;
+  --color-ink: #ece7db;
+  --color-ink-soft: #a09aac;
+  --color-line: #34323d;
+  --color-accent: #e08a63;
+  --color-accent-soft: #3a2822;
+  --color-ok: #86bd8f;
+  --color-ok-soft: #223321;
+  --color-bad: #e2837a;
+  --color-bad-soft: #3b2523;
+}
+
 :root { color-scheme: light; }
+.dark { color-scheme: dark; }
 html, body { height: 100%; }
+
+/* Smooth theme switch. */
+body, .theme-smooth { transition: background-color 250ms ease, color 250ms ease, border-color 250ms ease; }
 
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* Single high-impact motion: question advance. */
+/* ── Motion library ─────────────────────────────────────────────── */
+
+/* Question advance (signature transition). */
 @keyframes q-slide {
   from { opacity: 0; transform: translateX(12px); }
   to { opacity: 1; transform: none; }
 }
 .q-enter { animation: q-slide 140ms ease-out; }
+
+/* Page entrance + staggered children. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.page-enter { animation: rise 240ms ease-out both; }
+.rise { animation: rise 320ms ease-out both; }
+.rise-1 { animation-delay: 60ms; }
+.rise-2 { animation-delay: 120ms; }
+.rise-3 { animation-delay: 180ms; }
+.rise-4 { animation-delay: 240ms; }
 
 /* Blinking prompt caret — the app's signature mark. */
 .caret::after {
@@ -42,7 +78,58 @@ html, body { height: 100%; }
 }
 @keyframes caret-blink { 50% { opacity: 0; } }
 
+/* Answer selection pop. */
+@keyframes pop {
+  0% { transform: scale(0.985); }
+  60% { transform: scale(1.005); }
+  100% { transform: none; }
+}
+.option-pop { animation: pop 180ms ease-out; }
+
+/* Practice reveal: correct answer glows in, a wrong pick shakes. */
+@keyframes reveal-ok {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-ok) 45%, transparent); }
+  100% { box-shadow: 0 0 0 8px transparent; }
+}
+.reveal-ok { animation: reveal-ok 500ms ease-out; }
+@keyframes shake {
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+.reveal-bad { animation: shake 300ms ease-in-out; }
+
+/* Ledger cell tick when a question gets answered. */
+@keyframes cell-pop {
+  40% { transform: scale(1.18); }
+  100% { transform: none; }
+}
+.cell-pop { animation: cell-pop 200ms ease-out; }
+
+/* Timer under 10 minutes. */
+@keyframes pulse-soft { 50% { opacity: 0.55; } }
+.pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
+
+/* Results: PASS/FAIL stamp + score bars. */
+@keyframes stamp {
+  0% { opacity: 0; transform: scale(1.4) rotate(-4deg); }
+  100% { opacity: 1; transform: none; }
+}
+.stamp { animation: stamp 320ms cubic-bezier(0.2, 1.4, 0.4, 1) both; animation-delay: 150ms; }
+@keyframes grow-bar { from { width: 0; } }
+.grow-bar { animation: grow-bar 600ms ease-out both; }
+
+/* CTA arrow nudge. */
+.arrow-nudge .arrow { display: inline-block; transition: transform 160ms ease; }
+.arrow-nudge:hover .arrow { transform: translateX(4px); }
+
+/* Reduced motion: kill all animation/transition durations globally. */
 @media (prefers-reduced-motion: reduce) {
-  .q-enter { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
   .caret::after { animation: none; }
 }

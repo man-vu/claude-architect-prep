@@ -30,7 +30,7 @@ function QuestionMap({
         const cur = idx === current;
         let cls = "border-line bg-card text-ink-soft hover:border-ink-soft";
         if (cur) cls = "border-accent bg-accent-soft font-bold text-accent";
-        else if (answered) cls = "border-ink bg-ink text-paper";
+        else if (answered) cls = "cell-pop border-ink bg-ink text-paper";
         return (
           <li key={q.id}>
             <button
@@ -161,13 +161,13 @@ export default function Exam() {
   );
 
   const clock = remaining !== null && (
-    <div className={`font-mono text-2xl font-bold tabular-nums ${lowTime ? "text-bad" : "text-ink"}`} aria-label="Time remaining">
+    <div className={`font-mono text-2xl font-bold tabular-nums ${lowTime ? "pulse-soft text-bad" : "text-ink"}`} aria-label="Time remaining">
       {formatClock(remaining)}
     </div>
   );
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-8 lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-10">
+    <main className="page-enter mx-auto max-w-6xl px-6 py-8 lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-10">
       {/* Ledger rail (desktop) */}
       <aside className="hidden lg:block">
         <div className="sticky top-6 flex flex-col gap-5">
@@ -207,13 +207,13 @@ export default function Exam() {
         <div className="mx-auto mt-6 flex max-w-3xl items-center justify-between">
           <button
             disabled={i === 0} onClick={() => setI(i - 1)}
-            className="rounded-md border border-line bg-card px-5 py-2.5 font-mono text-sm font-semibold transition-colors hover:border-ink-soft disabled:opacity-40"
+            className="theme-smooth rounded-md border border-line bg-card px-5 py-2.5 font-mono text-sm font-semibold transition-colors hover:border-ink-soft disabled:opacity-40"
           >
             ← Prev
           </button>
           {i + 1 < questions.length ? (
-            <button onClick={() => setI(i + 1)} className="rounded-md bg-ink px-6 py-2.5 font-mono text-sm font-semibold text-paper transition-colors hover:bg-accent">
-              Next →
+            <button onClick={() => setI(i + 1)} className="arrow-nudge rounded-md bg-ink px-6 py-2.5 font-mono text-sm font-semibold text-paper transition-colors hover:bg-accent">
+              Next <span className="arrow">→</span>
             </button>
           ) : (
             <button onClick={() => (unanswered > 0 && !confirming ? setConfirming(true) : submit())} className="rounded-md bg-ink px-6 py-2.5 font-mono text-sm font-semibold text-paper transition-colors hover:bg-accent">

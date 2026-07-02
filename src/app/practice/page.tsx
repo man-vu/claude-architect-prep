@@ -27,18 +27,18 @@ export default function Practice() {
     }
   }, []);
 
-  const topicCls = "rounded-md border border-line bg-card p-4 text-left transition-colors hover:border-ink-soft disabled:opacity-40";
+  const topicCls = "rise theme-smooth rounded-md border border-line bg-card p-4 text-left transition-colors hover:border-ink-soft disabled:opacity-40";
 
   if (!filter) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
+      <main className="page-enter mx-auto max-w-3xl px-6 py-10">
         <Link href="/" className="font-mono text-sm text-accent hover:underline">← Home</Link>
         <h1 className="mt-3 font-mono text-2xl font-bold tracking-tight">Practice by scenario</h1>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          {(Object.keys(SCENARIOS) as ScenarioId[]).map((s) => {
+          {(Object.keys(SCENARIOS) as ScenarioId[]).map((s, idx) => {
             const n = allQuestions.filter((q) => q.scenario === s).length;
             return (
-              <button key={s} disabled={n === 0} onClick={() => { setFilter({ kind: "scenario", id: s }); setI(0); setSelected(null); }} className={topicCls}>
+              <button key={s} disabled={n === 0} style={{ animationDelay: `${idx * 50}ms` }} onClick={() => { setFilter({ kind: "scenario", id: s }); setI(0); setSelected(null); }} className={topicCls}>
                 <div className="font-mono text-sm font-semibold">{SCENARIOS[s].label}</div>
                 <div className="mt-0.5 font-mono text-xs text-ink-soft">{n} questions</div>
               </button>
@@ -47,10 +47,10 @@ export default function Practice() {
         </div>
         <h2 className="mt-8 font-mono text-2xl font-bold tracking-tight">Practice by domain</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          {(Object.keys(DOMAINS) as Domain[]).map((d) => {
+          {(Object.keys(DOMAINS) as Domain[]).map((d, idx) => {
             const n = allQuestions.filter((q) => q.domain === d).length;
             return (
-              <button key={d} disabled={n === 0} onClick={() => { setFilter({ kind: "domain", id: d }); setI(0); setSelected(null); }} className={topicCls}>
+              <button key={d} disabled={n === 0} style={{ animationDelay: `${idx * 50}ms` }} onClick={() => { setFilter({ kind: "domain", id: d }); setI(0); setSelected(null); }} className={topicCls}>
                 <div className="font-mono text-sm font-semibold">{DOMAINS[d].label}</div>
                 <div className="mt-0.5 font-mono text-xs text-ink-soft">{n} questions · weight {DOMAINS[d].weight}%</div>
               </button>

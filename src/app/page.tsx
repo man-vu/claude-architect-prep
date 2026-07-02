@@ -18,27 +18,27 @@ export default function Home() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
-      <p className="font-mono text-xs font-bold uppercase tracking-widest text-accent">▸ Foundations certification prep</p>
-      <h1 className="caret mt-2 font-mono text-3xl font-bold tracking-tight sm:text-4xl">Claude Certified Architect</h1>
-      <p className="mt-3 text-ink-soft">Score 100–1000 · pass at 720 · 60 questions in 120 minutes.</p>
-      <div className="mt-8 grid grid-cols-3 gap-4">
+      <p className="rise font-mono text-xs font-bold uppercase tracking-widest text-accent">▸ Foundations certification prep</p>
+      <h1 className="caret rise rise-1 mt-2 font-mono text-3xl font-bold tracking-tight sm:text-4xl">Claude Certified Architect</h1>
+      <p className="rise rise-1 mt-3 text-ink-soft">Score 100–1000 · pass at 720 · 60 questions in 120 minutes.</p>
+      <div className="rise rise-2 mt-8 grid grid-cols-3 gap-4">
         <Stat label="Best exam" value={best !== null ? String(best) : "—"} />
         <Stat label="Attempts" value={String(attempts.length)} />
         <Stat label="Pass mark" value="720" />
       </div>
       {resumable && (
-        <Link href="/exam" className="mt-8 block rounded-md border border-accent bg-accent-soft px-6 py-4 text-center font-mono text-sm font-semibold text-ink transition-colors hover:bg-accent hover:text-paper">
+        <Link href="/exam" className="rise mt-8 block rounded-md border border-accent bg-accent-soft px-6 py-4 text-center font-mono text-sm font-semibold text-ink transition-colors hover:bg-accent hover:text-paper">
           Resume exam — {resumable.answered}/{resumable.total} answered →
         </Link>
       )}
-      <div className={`${resumable ? "mt-3" : "mt-8"} flex flex-col gap-3 sm:flex-row`}>
+      <div className={`${resumable ? "mt-3" : "mt-8"} rise rise-3 flex flex-col gap-3 sm:flex-row`}>
         <Link href="/exam" className="flex-1 rounded-md bg-ink px-6 py-4 text-center font-mono text-base font-semibold text-paper transition-colors hover:bg-accent">
           {resumable ? "Resume exam" : "Start exam"}
         </Link>
-        <Link href="/practice" className="flex-1 rounded-md border border-line bg-card px-6 py-4 text-center font-mono text-base font-semibold transition-colors hover:border-ink-soft">Practice by topic</Link>
+        <Link href="/practice" className="theme-smooth flex-1 rounded-md border border-line bg-card px-6 py-4 text-center font-mono text-base font-semibold transition-colors hover:border-ink-soft">Practice by topic</Link>
       </div>
-      <Link href="/study" className="mt-3 block rounded-md border border-line bg-card px-6 py-4 text-center font-mono text-base font-semibold transition-colors hover:border-ink-soft">Study the theory</Link>
-      <Link href="/history" className="mt-5 inline-block font-mono text-sm text-accent hover:underline">View history →</Link>
+      <Link href="/study" className="theme-smooth rise rise-4 mt-3 block rounded-md border border-line bg-card px-6 py-4 text-center font-mono text-base font-semibold transition-colors hover:border-ink-soft">Study the theory</Link>
+      <Link href="/history" className="arrow-nudge rise rise-4 mt-5 inline-block font-mono text-sm text-accent hover:underline">View history <span className="arrow">→</span></Link>
     </main>
   );
 }

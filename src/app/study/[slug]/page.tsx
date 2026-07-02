@@ -16,7 +16,7 @@ export default async function StudyPageRoute({ params }: { params: Promise<{ slu
   if (!page) notFound();
   const md = readFileSync(join(process.cwd(), "src/content/study", `${slug}.md`), "utf8");
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
+    <main className="page-enter mx-auto max-w-3xl px-6 py-10">
       <Link href="/study" className="font-mono text-sm text-accent hover:underline">← Study</Link>
       <div className="mt-3 mb-6">
         <span className="font-mono text-xs font-bold uppercase tracking-widest text-accent">

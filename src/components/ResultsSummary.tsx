@@ -2,8 +2,26 @@
 import type { Attempt, Question } from "@/domain/types";
 import { DOMAINS, SCENARIOS } from "@/content/scenarios";
 import { computeBreakdown } from "@/domain/scoring";
+import type { BreakdownEntry } from "@/domain/types";
 import { Stat } from "./Stat";
 import { QuestionCard } from "./QuestionCard";
+
+function BreakdownRow({ entry, label, delayMs }: { entry: BreakdownEntry; label: string; delayMs: number }) {
+  return (
+    <li className="theme-smooth rounded-md border border-line bg-card px-4 py-2 text-sm">
+      <div className="flex justify-between">
+        <span>{label}</span>
+        <span className="font-mono font-semibold">{entry.correct}/{entry.total} · {entry.pct}%</span>
+      </div>
+      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-line">
+        <div
+          className={`grow-bar h-full rounded-full ${entry.pct >= 72 ? "bg-ok" : "bg-accent"}`}
+          style={{ width: `${entry.pct}%`, animationDelay: `${delayMs}ms` }}
+        />
+      </div>
+    </li>
+  );
+}
 
 export function ResultsSummary({ attempt, questions }: { attempt: Attempt; questions: Question[] }) {
   const byId = new Map(questions.map((q) => [q.id, q]));
@@ -11,10 +29,9 @@ export function ResultsSummary({ attempt, questions }: { attempt: Attempt; quest
   const domainBd = computeBreakdown(attempt.results, byId, "domain");
   const scenarioBd = computeBreakdown(attempt.results, byId, "scenario");
   const wrong = attempt.results.filter((r) => !r.correct);
-  const rowCls = "flex justify-between rounded-md border border-line bg-card px-4 py-2 text-sm";
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className={`font-mono text-2xl font-bold tracking-tight ${attempt.passed ? "text-ok" : "text-ink"}`}>
+    <div className="page-enter mx-auto max-w-3xl">
+      <h1 className={`stamp font-mono text-2xl font-bold tracking-tight ${attempt.passed ? "text-ok" : "text-ink"}`}>
         {attempt.passed ? "▸ Passed" : "▸ Not yet"}
       </h1>
       <div className="mt-4 grid grid-cols-3 gap-4">
@@ -24,20 +41,14 @@ export function ResultsSummary({ attempt, questions }: { attempt: Attempt; quest
       </div>
       <h2 className="mt-8 font-mono text-xs font-bold uppercase tracking-widest text-ink-soft">▸ By domain</h2>
       <ul className="mt-2 space-y-1">
-        {domainBd.map((b) => (
-          <li key={b.key} className={rowCls}>
-            <span>{DOMAINS[b.key as keyof typeof DOMAINS]?.label ?? b.key}</span>
-            <span className="font-mono font-semibold">{b.correct}/{b.total} · {b.pct}%</span>
-          </li>
+        {domainBd.map((b, idx) => (
+          <BreakdownRow key={b.key} entry={b} delayMs={idx * 90} label={DOMAINS[b.key as keyof typeof DOMAINS]?.label ?? b.key} />
         ))}
       </ul>
       <h2 className="mt-8 font-mono text-xs font-bold uppercase tracking-widest text-ink-soft">▸ By scenario</h2>
       <ul className="mt-2 space-y-1">
-        {scenarioBd.map((b) => (
-          <li key={b.key} className={rowCls}>
-            <span>{SCENARIOS[b.key as keyof typeof SCENARIOS]?.label ?? b.key}</span>
-            <span className="font-mono font-semibold">{b.correct}/{b.total} · {b.pct}%</span>
-          </li>
+        {scenarioBd.map((b, idx) => (
+          <BreakdownRow key={b.key} entry={b} delayMs={idx * 90} label={SCENARIOS[b.key as keyof typeof SCENARIOS]?.label ?? b.key} />
         ))}
       </ul>
       {wrong.length > 0 && (
