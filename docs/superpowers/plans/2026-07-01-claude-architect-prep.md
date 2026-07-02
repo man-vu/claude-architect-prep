@@ -811,8 +811,9 @@ git commit -m "feat(domain): seedable exam composition (4 scenarios x N)"
 **Interfaces:**
 - Consumes: `Attempt`, `Letter`, `Question`, `QuestionResult`; `scaledScore`, `isPass`, `computeBreakdown`.
 - Produces: `useExamStore` with state `{ attempts, session }` and actions
-  `startSession(mode, questions)`, `answerCurrent(letter)`, `finishSession(): Attempt | null`, `resetSession()`;
-  selectors `bestScore(): number | null`.
+  `startSession(mode, questions)`, `answer(questionId, letter)`, `finishSession(): Attempt | null`, `resetSession()`;
+  selectors `bestScore(): number | null`. Answers are addressed by `questionId` (not a
+  running index) so re-selecting or out-of-order navigation can't corrupt the recorded answers.
 
 - [ ] **Step 1: Install + write the failing test**
 ```bash
@@ -840,19 +841,40 @@ beforeEach(() => {
 
 describe("exam store", () => {
   it("records an attempt with a scaled score on finish", () => {
-    const s = useExamStore.getState();
-    s.startSession("exam", [q("1"), q("2")]);
-    useExamStore.getState().answerCurrent("A"); // correct
-    useExamStore.getState().answerCurrent("B"); // wrong
+    useExamStore.getState().startSession("exam", [q("1"), q("2")]);
+    useExamStore.getState().answer("1", "A"); // correct
+    useExamStore.getState().answer("2", "B"); // wrong
     const attempt = useExamStore.getState().finishSession();
     expect(attempt?.results).toHaveLength(2);
     expect(attempt?.scaledScore).toBe(550); // 1/2 correct -> 100+450
     expect(useExamStore.getState().attempts).toHaveLength(1);
   });
+  it("scores unanswered questions as incorrect (chosen null)", () => {
+    useExamStore.getState().startSession("exam", [q("1"), q("2")]);
+    useExamStore.getState().answer("1", "A");
+    const attempt = useExamStore.getState().finishSession();
+    expect(attempt?.results[1]).toEqual({ questionId: "2", chosen: null, correct: false });
+  });
+  it("re-answering the same question overwrites, not corrupts", () => {
+    useExamStore.getState().startSession("exam", [q("1"), q("2")]);
+    useExamStore.getState().answer("1", "B"); // wrong first
+    useExamStore.getState().answer("1", "A"); // corrected
+    useExamStore.getState().answer("2", "A");
+    const attempt = useExamStore.getState().finishSession();
+    expect(attempt?.scaledScore).toBe(1000); // both correct
+  });
+  it("bestScore is the max exam score, null when no exams", () => {
+    expect(useExamStore.getState().bestScore()).toBeNull();
+    useExamStore.getState().startSession("exam", [q("1"), q("2")]);
+    useExamStore.getState().answer("1", "A");
+    useExamStore.getState().answer("2", "A");
+    useExamStore.getState().finishSession();
+    expect(useExamStore.getState().bestScore()).toBe(1000);
+  });
   it("caps stored history at 50", () => {
     for (let i = 0; i < 55; i++) {
       useExamStore.getState().startSession("practice", [q("x")]);
-      useExamStore.getState().answerCurrent("A");
+      useExamStore.getState().answer("x", "A");
       useExamStore.getState().finishSession();
     }
     expect(useExamStore.getState().attempts.length).toBe(50);
@@ -869,7 +891,7 @@ describe("exam store", () => {
 "use client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Attempt, Letter, Question, QuestionResult, ScenarioId } from "@/domain/types";
+import type { Attempt, Letter, Question, QuestionResult } from "@/domain/types";
 import { isPass, scaledScore } from "@/domain/scoring";
 
 const HISTORY_CAP = 50;
@@ -879,8 +901,7 @@ function newId(): string { counter += 1; return `a${Date.now()}-${counter}`; }
 interface Session {
   mode: "exam" | "practice";
   questions: Question[];
-  index: number;
-  answers: Record<string, Letter | null>;
+  answers: Record<string, Letter>;
   startedAt: number;
 }
 
@@ -888,8 +909,7 @@ interface ExamState {
   attempts: Attempt[];
   session: Session | null;
   startSession: (mode: "exam" | "practice", questions: Question[]) => void;
-  answerCurrent: (letter: Letter) => void;
-  goto: (index: number) => void;
+  answer: (questionId: string, letter: Letter) => void;
   finishSession: () => Attempt | null;
   resetSession: () => void;
   bestScore: () => number | null;
@@ -901,18 +921,12 @@ export const useExamStore = create<ExamState>()(
       attempts: [],
       session: null,
       startSession: (mode, questions) =>
-        set({ session: { mode, questions, index: 0, answers: {}, startedAt: Date.now() } }),
-      answerCurrent: (letter) => {
+        set({ session: { mode, questions, answers: {}, startedAt: Date.now() } }),
+      // Answers are keyed by questionId — safe against re-selection and out-of-order navigation.
+      answer: (questionId, letter) => {
         const s = get().session;
         if (!s) return;
-        const qid = s.questions[s.index].id;
-        const answers = { ...s.answers, [qid]: letter };
-        const index = Math.min(s.index + 1, s.questions.length);
-        set({ session: { ...s, answers, index } });
-      },
-      goto: (index) => {
-        const s = get().session;
-        if (s) set({ session: { ...s, index } });
+        set({ session: { ...s, answers: { ...s.answers, [questionId]: letter } } });
       },
       finishSession: () => {
         const s = get().session;
@@ -923,7 +937,7 @@ export const useExamStore = create<ExamState>()(
         });
         const correct = results.filter((r) => r.correct).length;
         const score = scaledScore(correct, results.length);
-        const scenariosUsed = [...new Set(s.questions.map((q) => q.scenario))] as ScenarioId[];
+        const scenariosUsed = [...new Set(s.questions.map((q) => q.scenario))];
         const attempt: Attempt = {
           id: newId(), mode: s.mode, startedAt: s.startedAt, finishedAt: Date.now(),
           scenariosUsed, results, scaledScore: score, passed: isPass(score),
@@ -958,8 +972,9 @@ git commit -m "feat(store): persisted attempts + session state with history cap"
 - Create: `src/components/Markdown.tsx`, `src/components/OptionList.tsx`, `src/components/Explanation.tsx`, `src/components/QuestionCard.tsx`
 
 **Interfaces:**
-- Produces: `<QuestionCard question mode revealed selected onSelect />` where
-  `mode: "practice" | "exam"`, `revealed: boolean`, `selected: Letter | null`, `onSelect: (l: Letter) => void`.
+- Produces: `<QuestionCard question revealed selected onSelect />` where
+  `revealed: boolean` (caller-driven — practice reveals on select, exam stays false until results),
+  `selected: Letter | null`, `onSelect: (l: Letter) => void`. No `mode` prop; reveal timing is the caller's job.
 
 - [ ] **Step 1: Install markdown deps**
 ```bash
@@ -1276,6 +1291,7 @@ export function ResultsSummary({ attempt, questions }: { attempt: Attempt; quest
   const byId = new Map(questions.map((q) => [q.id, q]));
   const correct = attempt.results.filter((r) => r.correct).length;
   const domainBd = computeBreakdown(attempt.results, byId, "domain");
+  const scenarioBd = computeBreakdown(attempt.results, byId, "scenario");
   const wrong = attempt.results.filter((r) => !r.correct);
   return (
     <div className="mx-auto max-w-3xl">
@@ -1290,6 +1306,15 @@ export function ResultsSummary({ attempt, questions }: { attempt: Attempt; quest
         {domainBd.map((b) => (
           <li key={b.key} className="flex justify-between rounded-lg bg-white px-4 py-2 text-sm shadow-sm">
             <span>{DOMAINS[b.key as keyof typeof DOMAINS]?.label ?? b.key}</span>
+            <span className="font-semibold">{b.correct}/{b.total} · {b.pct}%</span>
+          </li>
+        ))}
+      </ul>
+      <h2 className="mt-8 text-lg font-bold">By scenario</h2>
+      <ul className="mt-2 space-y-1">
+        {scenarioBd.map((b) => (
+          <li key={b.key} className="flex justify-between rounded-lg bg-white px-4 py-2 text-sm shadow-sm">
+            <span>{SCENARIOS[b.key as keyof typeof SCENARIOS]?.label ?? b.key}</span>
             <span className="font-semibold">{b.correct}/{b.total} · {b.pct}%</span>
           </li>
         ))}
@@ -1315,7 +1340,7 @@ export function ResultsSummary({ attempt, questions }: { attempt: Attempt; quest
 `src/app/exam/page.tsx`:
 ```tsx
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { allQuestions } from "@/content/questions";
 import { composeExam } from "@/domain/exam";
@@ -1330,11 +1355,13 @@ export default function Exam() {
   const [answers, setAnswers] = useState<Record<string, Letter>>({});
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const startSession = useExamStore((s) => s.startSession);
-  const answerCurrent = useExamStore((s) => s.answerCurrent);
+  const answer = useExamStore((s) => s.answer);
   const finishSession = useExamStore((s) => s.finishSession);
 
-  // Start the persisted session once, lazily.
-  useMemo(() => startSession("exam", questions), [questions, startSession]);
+  // Start the persisted session on mount.
+  useEffect(() => {
+    startSession("exam", questions);
+  }, [questions, startSession]);
 
   if (attempt) {
     return (
@@ -1349,7 +1376,7 @@ export default function Exam() {
   const answered = Object.keys(answers).length;
   const select = (l: Letter) => {
     setAnswers((a) => ({ ...a, [q.id]: l }));
-    answerCurrent(l);
+    answer(q.id, l);
   };
   const submit = () => setAttempt(finishSession());
 
@@ -1453,6 +1480,16 @@ git commit -m "style: mobile responsiveness pass (375px/768px)"
 ---
 
 ### Task 14: PWA — manifest, icons, service worker, offline
+
+> **Post-implementation correction (commit 9cd386f):** the `defaultCache` from
+> `@serwist/next/worker` is a Next *server* preset and does NOT serve exported HTML
+> documents offline — a dynamic offline test (Playwright, network offline) confirmed the
+> installed PWA failed to load offline. The shipped `src/app/sw.ts` instead uses explicit
+> `runtimeCaching` (navigate → NetworkFirst, style/script/worker → StaleWhileRevalidate,
+> image/font → CacheFirst) with `navigationPreload: false`, and `next.config.ts` adds
+> `additionalPrecacheEntries` for `/`, `/exam`, `/practice`, `/history` (git-hash revision)
+> so every route's HTML is precached and served offline. The code below is the original
+> plan; see the repo for the corrected version.
 
 **Files:**
 - Create: `public/manifest.webmanifest`, `public/icons/icon-192.png`, `public/icons/icon-512.png`, `public/icons/apple-touch-icon.png`, `src/app/sw.ts`
@@ -1690,6 +1727,6 @@ git commit -m "test(e2e): exam + practice smoke; final verification"
 
 **Placeholder scan:** No "TBD/TODO". Task 15 intentionally does not inline all 60 questions (authoring is the execution work), but it fixes format, source grounding, per-question quality bar, an example entry, and a validation+verification gate — not a vague "write questions" instruction.
 
-**Type consistency:** `Letter`, `Domain`, `ScenarioId`, `Option`, `Question`, `QuestionResult`, `Attempt`, `BreakdownEntry`, `ExamConfig` defined once (Task 2) and reused verbatim. `validateQuestionBank`, `allQuestions`, `scaledScore`, `isPass`, `computeBreakdown`, `composeExam`, `mulberry32`, and store actions (`startSession`/`answerCurrent`/`finishSession`/`bestScore`) are named identically across tasks. Scenario ids and domain ids match the Global Constraints list.
+**Type consistency:** `Letter`, `Domain`, `ScenarioId`, `Option`, `Question`, `QuestionResult`, `Attempt`, `BreakdownEntry`, `ExamConfig` defined once (Task 2) and reused verbatim. `validateQuestionBank`, `allQuestions`, `scaledScore`, `isPass`, `computeBreakdown`, `composeExam`, `mulberry32`, and store actions (`startSession`/`answer`/`finishSession`/`bestScore`) are named identically across tasks. Scenario ids and domain ids match the Global Constraints list.
 
 **Known risk carried forward:** exam length (20 = 4×5) is a config default; the guide fixes 4 scenarios but not questions-per-scenario. `composeExam` throws clearly if fewer than 4 scenarios have ≥5 questions — which is why Task 15 (fill all 8 scenarios) must land before exam mode is considered production-complete, though exam mode already works on the 4 legacy scenarios after Task 11.

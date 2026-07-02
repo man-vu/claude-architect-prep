@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.log
+.DS_Store
+.superpowers/
+playwright-report/
+test-results/
+tsconfig.tsbuildinfo
+public/sw.js
+public/swe-worker-*.js
