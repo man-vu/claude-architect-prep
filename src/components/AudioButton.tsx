@@ -13,6 +13,7 @@ export function AudioButton({ id, label = "listen" }: { id: string; label?: stri
   const meta = AUDIO[id];
   const ref = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [pos, setPos] = useState(0);
 
   useEffect(() => () => { if (ref.current) releaseAudio(ref.current); }, [id]);
@@ -24,22 +25,30 @@ export function AudioButton({ id, label = "listen" }: { id: string; label?: stri
       const el = new Audio(audioUrl(id)!);
       el.preload = "none";
       el.addEventListener("timeupdate", () => setPos(el.currentTime));
-      el.addEventListener("ended", () => { setPlaying(false); setPos(0); });
+      el.addEventListener("ended", () => { setPlaying(false); setLoading(false); setPos(0); });
       el.addEventListener("pause", () => setPlaying(false));
-      el.addEventListener("play", () => setPlaying(true));
+      // "play" fires the instant play() is requested (may still be buffering);
+      // "playing" fires once audio is actually producing sound.
+      el.addEventListener("play", () => setLoading(true));
+      el.addEventListener("playing", () => { setLoading(false); setPlaying(true); });
+      el.addEventListener("waiting", () => setLoading(true)); // mid-playback stall/rebuffer
+      el.addEventListener("error", () => { setLoading(false); setPlaying(false); });
       ref.current = el;
     }
     const el = ref.current;
     if (el.paused) { claimAudio(el); void el.play(); } else el.pause();
   };
 
+  const label_ = loading ? "loading…" : playing ? `❚❚ ${fmt(pos)}` : `▸ ${label} ${fmt(meta.s)}`;
+
   return (
     <button
-      type="button" onClick={toggle}
-      aria-label={playing ? `Pause ${label}` : `Play ${label}, ${fmt(meta.s)}`}
-      className="shrink-0 rounded-md border border-line bg-card px-2.5 py-1 font-mono text-xs font-semibold text-ink-soft transition-colors hover:border-accent hover:text-accent"
+      type="button" onClick={toggle} disabled={loading}
+      aria-label={loading ? `Loading ${label}` : playing ? `Pause ${label}` : `Play ${label}, ${fmt(meta.s)}`}
+      className="shrink-0 rounded-md border border-line bg-card px-2.5 py-1 font-mono text-xs font-semibold text-ink-soft transition-colors hover:border-accent hover:text-accent disabled:cursor-wait"
     >
-      {playing ? `❚❚ ${fmt(pos)}` : `▸ ${label} ${fmt(meta.s)}`}
+      {loading && <span className="spin mr-1 inline-block text-accent">◐</span>}
+      {label_}
     </button>
   );
 }

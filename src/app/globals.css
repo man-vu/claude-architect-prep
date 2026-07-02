@@ -96,6 +96,11 @@ body, .theme-smooth { transition: background-color 250ms ease, color 250ms ease,
 
 /* ── Motion library ─────────────────────────────────────────────── */
 
+/* Loading spinner: a rotating glyph for async waits (audio buffering, exam
+   composing). Zeroed globally under prefers-reduced-motion below. */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { display: inline-block; animation: spin 800ms linear infinite; }
+
 /* Question advance (signature transition). */
 @keyframes q-slide {
   from { opacity: 0; transform: translateX(12px); }

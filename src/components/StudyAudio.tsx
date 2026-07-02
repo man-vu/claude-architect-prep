@@ -28,6 +28,7 @@ export function StudyAudio({ slug }: { slug: string }) {
     .sort(([a], [b]) => a.localeCompare(b));
   const [currentIdx, setCurrentIdx] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [dragX, setDragX] = useState<number | null>(null); // drawer's own live offset while dragging
   const dragStart = useRef<{ x: number; base: number } | null>(null);
@@ -47,12 +48,17 @@ export function StudyAudio({ slug }: { slug: string }) {
   const total = sections.reduce((s, [, m]) => s + m.s, 0);
 
   const playIdx = (idx: number) => {
-    if (idx >= sections.length) { setCurrentIdx(null); setPlaying(false); return; }
+    if (idx >= sections.length) { setCurrentIdx(null); setPlaying(false); setLoading(false); return; }
     if (audioRef.current) releaseAudio(audioRef.current);
     const el = new Audio(audioUrl(sections[idx][0])!);
     el.addEventListener("ended", () => playIdx(idx + 1)); // auto-advance
     el.addEventListener("pause", () => setPlaying(false));
-    el.addEventListener("play", () => setPlaying(true));
+    // "play" fires the instant play() is requested (may still be buffering);
+    // "playing" fires once audio is actually producing sound.
+    el.addEventListener("play", () => setLoading(true));
+    el.addEventListener("playing", () => { setLoading(false); setPlaying(true); });
+    el.addEventListener("waiting", () => setLoading(true)); // mid-playback stall/rebuffer
+    el.addEventListener("error", () => { setLoading(false); setPlaying(false); });
     audioRef.current = el;
     setCurrentIdx(idx);
     claimAudio(el);
@@ -126,10 +132,12 @@ export function StudyAudio({ slug }: { slug: string }) {
         }}
       >
         <button
-          type="button" onClick={toggleCurrent}
-          className="w-full rounded-md bg-ink px-4 py-2 font-mono text-xs font-semibold text-paper transition-colors hover:bg-accent"
+          type="button" onClick={toggleCurrent} disabled={loading}
+          className="w-full rounded-md bg-ink px-4 py-2 font-mono text-xs font-semibold text-paper transition-colors hover:bg-accent disabled:cursor-wait"
         >
-          {playing ? "❚❚ pause" : currentIdx === null ? `▸ listen to this page ${fmt(total)}` : "▸ resume"}
+          {loading
+            ? <><span className="spin mr-1 inline-block">◐</span>loading…</>
+            : playing ? "❚❚ pause" : currentIdx === null ? `▸ listen to this page ${fmt(total)}` : "▸ resume"}
         </button>
         <ol className="mt-3 space-y-1">
           {sections.map(([id, m], idx) => (
@@ -138,7 +146,9 @@ export function StudyAudio({ slug }: { slug: string }) {
                 type="button" onClick={() => goToSection(idx)}
                 className={`w-full rounded px-2 py-1 text-left font-mono text-xs transition-colors hover:text-accent ${idx === currentIdx ? "bg-accent-soft text-accent" : "text-ink-soft"}`}
               >
-                {idx === currentIdx && playing ? "❚❚" : "▸"} {m.t ?? id} · {fmt(m.s)}
+                {idx === currentIdx && loading
+                  ? <span className="spin mr-0.5 inline-block text-accent">◐</span>
+                  : idx === currentIdx && playing ? "❚❚" : "▸"} {m.t ?? id} · {fmt(m.s)}
               </button>
             </li>
           ))}

@@ -118,7 +118,11 @@ export default function Exam() {
   }, [questions, attempt, select]);
 
   if (!questions) {
-    return <main className="mx-auto max-w-3xl px-6 py-10 font-mono text-sm text-ink-soft">Preparing your exam…</main>;
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-10 font-mono text-sm text-ink-soft">
+        <span className="spin mr-1.5 inline-block text-accent">◐</span>Preparing your exam…
+      </main>
+    );
   }
 
   if (attempt) {
