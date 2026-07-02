@@ -5,6 +5,7 @@ import { situationRepeatsQuestion } from "@/domain/text";
 import { Markdown } from "./Markdown";
 import { OptionList } from "./OptionList";
 import { Explanation } from "./Explanation";
+import { AudioButton } from "./AudioButton";
 
 export function QuestionCard({
   question, revealed, selected, onSelect,
@@ -15,9 +16,12 @@ export function QuestionCard({
   const askShownInSituation = situationRepeatsQuestion(question.situation, question.question);
   return (
     <div className="mx-auto max-w-3xl">
-      <span className="font-mono text-xs font-bold uppercase tracking-widest text-accent">
-        ▸ {SCENARIOS[question.scenario].label}
-      </span>
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-mono text-xs font-bold uppercase tracking-widest text-accent">
+          ▸ {SCENARIOS[question.scenario].label}
+        </span>
+        <AudioButton id={`q-${question.id}`} />
+      </div>
       <div className="my-4 rounded-md border border-line bg-card p-4 text-[16px]">
         <Markdown>{question.situation}</Markdown>
       </div>
@@ -28,7 +32,7 @@ export function QuestionCard({
         options={question.options} selected={selected} correct={question.correct}
         revealed={revealed} onSelect={onSelect}
       />
-      {revealed && <Explanation correct={question.correct} text={question.explanation} />}
+      {revealed && <Explanation correct={question.correct} text={question.explanation} audioId={`e-${question.id}`} />}
     </div>
   );
 }

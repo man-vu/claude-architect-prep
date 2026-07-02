@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { STUDY_SLUGS, studyPage } from "@/content/study";
 import { Prose } from "@/components/Prose";
+import { StudyAudio } from "@/components/StudyAudio";
 
 export function generateStaticParams() {
   return STUDY_SLUGS.map((slug) => ({ slug }));
@@ -24,6 +25,7 @@ export default async function StudyPageRoute({ params }: { params: Promise<{ slu
         </span>
         <h1 className="mt-1 font-mono text-3xl font-bold tracking-tight">{page.title}</h1>
       </div>
+      <StudyAudio slug={slug} />
       <Prose>{md}</Prose>
       <div className="mt-10 flex flex-wrap gap-3 border-t border-line pt-6">
         {page.group === "domain" && (
