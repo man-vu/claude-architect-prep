@@ -18,6 +18,7 @@
   --color-ok-soft: #e9f0e6;
   --color-bad: #a63d33;
   --color-bad-soft: #f7e8e4;
+  --color-code: #0f6e68; /* teal, distinct from accent/ok/bad; AA on paper */
   --font-mono: var(--font-jbm), ui-monospace, "Cascadia Mono", monospace;
   --font-serif: var(--font-ss4), Georgia, "Times New Roman", serif;
 }
@@ -35,6 +36,7 @@
   --color-ok-soft: #223321;
   --color-bad: #e2837a;
   --color-bad-soft: #3b2523;
+  --color-code: #5fc9bb;
 }
 
 :root { color-scheme: light; }
@@ -60,6 +62,13 @@ body, .theme-smooth { transition: background-color 250ms ease, color 250ms ease,
 .prose em, .prose-sm em {
   font-style: normal;
   color: var(--color-ink-soft);
+}
+
+/* Inline code identifiers (stop_reason, tool_use, etc.) get their own color, distinct
+   from accent/em, so they read as tokens rather than plain emphasized text. Excludes
+   code inside pre blocks, which already gets its own color from prose-pre above. */
+.prose code:not(pre code), .prose-sm code:not(pre code) {
+  color: var(--color-code);
 }
 
 /* ── Motion library ─────────────────────────────────────────────── */
