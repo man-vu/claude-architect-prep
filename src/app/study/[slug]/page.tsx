@@ -27,7 +27,7 @@ export default async function StudyPageRoute({ params }: { params: Promise<{ slu
       <Prose>{md}</Prose>
       <div className="mt-10 flex flex-wrap gap-3 border-t border-line pt-6">
         {page.group === "domain" && (
-          <Link href={`/practice?domain=${slug}`} className="rounded-md bg-ink px-5 py-2.5 font-mono text-sm font-semibold text-paper transition-colors hover:bg-accent">Practice this domain →</Link>
+          <Link href={`/practice?domain=${slug}`} className="rounded-md bg-ink px-5 py-2.5 font-mono text-sm font-semibold text-paper transition-colors hover:bg-accent">Drill this domain →</Link>
         )}
         <Link href="/study" className="rounded-md border border-line bg-card px-5 py-2.5 font-mono text-sm font-semibold transition-colors hover:border-ink-soft">All topics</Link>
       </div>

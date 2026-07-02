@@ -176,6 +176,10 @@ A best practice worth internalizing: **review code in an independent session fro
 
 When re-reviewing after fixes are pushed, feed the new session the prior findings explicitly and ask it to report only **new or still-unresolved** issues — otherwise every re-review re-lists the same already-fixed problems, drowning out what actually changed.
 
+**CLAUDE.md is how a CI-invoked Claude Code gets project context.** A pipeline run has no human to explain conventions, so the checked-in CLAUDE.md must carry them: testing standards, fixture conventions, and review criteria. Documenting what a *valuable* test looks like and which fixtures exist measurably improves generated-test quality and cuts low-value output.
+
+**For test generation, include the existing test files in context.** Without them, the generator can't know which scenarios are already covered and will happily propose duplicates of tests the suite already has; with them, it targets genuinely uncovered behavior.
+
 ```bash
 # First pass — independent reviewer, structured output for tooling
 claude -p "Review this PR diff" --output-format json --json-schema "$SCHEMA"
@@ -230,3 +234,4 @@ Good output is usually iterative, not one-shot:
 - **`-p`/`--print` is the only correct CI mode** — memorize this framing; expect a question phrased as "why does the pipeline hang" with the answer being a missing `-p` flag.
 - **`--resume` staleness risk**: a resumed session's tool-call results don't refresh automatically if underlying files changed — don't assume a resumed session has current information.
 - **Independent review sessions**: reviewing in the same session that wrote the code is a named anti-pattern; expect a question testing whether you'd reuse the generating session (wrong) or start fresh (right), plus the delta-reporting technique for re-reviews.
+- **CI context comes from CLAUDE.md** (testing standards, fixtures, review criteria), and **test generation needs the existing test files in context** so it doesn't duplicate already-covered scenarios.

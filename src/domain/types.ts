@@ -21,6 +21,16 @@ export interface Question {
   explanation: string;
 }
 
+// Direct theory-recall question (no scenario framing) — used by practice-by-domain.
+export interface TheoryQuestion {
+  id: string;
+  domain: Domain;
+  question: string;
+  options: Option[];
+  correct: Letter;
+  explanation: string;
+}
+
 export interface QuestionResult { questionId: string; chosen: Letter | null; correct: boolean }
 
 export interface Attempt {
