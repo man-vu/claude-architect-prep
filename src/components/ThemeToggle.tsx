@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useT } from "@/i18n/LocaleProvider";
 
 type Mode = "light" | "dark" | "system";
 const KEY = "cca-theme";
@@ -12,6 +13,7 @@ function apply(mode: Mode) {
 }
 
 export function ThemeToggle() {
+  const t = useT();
   const [mode, setMode] = useState<Mode | null>(null); // null until mounted (no SSR mismatch)
 
   useEffect(() => {
@@ -33,15 +35,16 @@ export function ThemeToggle() {
 
   if (mode === null) return <div className="h-8 w-12" aria-hidden />;
   const next = ORDER[(ORDER.indexOf(mode) + 1) % ORDER.length];
+  const modeLabel: Record<Mode, string> = { light: t.theme.light, dark: t.theme.dark, system: t.theme.system };
   return (
     <button
       type="button"
       onClick={() => setMode(next)}
-      title={`Theme: ${mode} — switch to ${next}`}
-      aria-label={`Theme: ${mode}. Switch to ${next}.`}
+      title={t.theme.ariaLabel(modeLabel[mode], modeLabel[next])}
+      aria-label={t.theme.ariaLabel(modeLabel[mode], modeLabel[next])}
       className="theme-smooth rounded-md border border-line bg-card px-3 py-1.5 font-mono text-xs font-semibold text-ink-soft transition-colors hover:border-ink-soft hover:text-ink"
     >
-      {GLYPH[mode]}<span className="hidden sm:inline"> {mode}</span>
+      {GLYPH[mode]}<span className="hidden sm:inline"> {modeLabel[mode]}</span>
     </button>
   );
 }
