@@ -49,6 +49,19 @@ body, .theme-smooth { transition: background-color 250ms ease, color 250ms ease,
   outline-offset: 2px;
 }
 
+/* Emphasis by color, not weight or style: bold and italic markdown render as accent
+   and muted color instead, so emphasis reads as a design signal, not shouting text.
+   Plain selectors (not the tw-prose-bold custom property) so this wins regardless of
+   Tailwind Typography's own dark:prose-invert utility ordering. */
+.prose strong, .prose-sm strong {
+  font-weight: 400;
+  color: var(--color-accent);
+}
+.prose em, .prose-sm em {
+  font-style: normal;
+  color: var(--color-ink-soft);
+}
+
 /* ── Motion library ─────────────────────────────────────────────── */
 
 /* Question advance (signature transition). */
