@@ -404,4 +404,58 @@ export const contextReliabilityTheory: TheoryQuestion[] = [
     correct: "C",
     explanation: "Strip the dates during aggregation and the same two numbers look like an unexplained inconsistency instead of a trend. `publication_date` is what distinguishes real contradictions from temporal trends.",
   },
+  // t-cr-32..35 are original additions covering exam topics (prompt caching,
+  // human-review prioritization) not yet drilled by the study-page-derived set.
+  {
+    id: "t-cr-32",
+    domain: "context-reliability",
+    question: "How does prompt caching decide whether a request can reuse a previously cached prefix?",
+    options: [
+      { letter: "A", text: "By semantic similarity — prompts that mean the same thing share a cache entry", correct: false },
+      { letter: "B", text: "By exact prefix match on the rendered prompt — any byte change before a cache breakpoint invalidates everything after that point", correct: true },
+      { letter: "C", text: "Each message is cached independently, so reordering messages still hits the cache", correct: false },
+      { letter: "D", text: "The server diffs the new prompt against the cached one and reuses whichever sections are unchanged, wherever they appear", correct: false },
+    ],
+    correct: "B",
+    explanation: "The cache key derives from the exact bytes of the rendered prompt (tools, then system, then messages) up to each `cache_control` breakpoint. A single differing byte at position N — a timestamp, a reordered JSON key, a changed tool — invalidates every breakpoint at or after N. There is no fuzzy matching and no mid-prompt section reuse.",
+  },
+  {
+    id: "t-cr-33",
+    domain: "context-reliability",
+    question: "Where should volatile, per-request content (timestamps, request IDs, the user's current question) sit relative to cached content in a prompt?",
+    options: [
+      { letter: "A", text: "After the last `cache_control` breakpoint, with stable content (system prompt, tool definitions) physically first", correct: true },
+      { letter: "B", text: "At the very start of the prompt so the model attends to it most strongly", correct: false },
+      { letter: "C", text: "Interpolated into the system prompt so it is always loaded with the instructions", correct: false },
+      { letter: "D", text: "Placement doesn't matter, since each content block is cached separately", correct: false },
+    ],
+    correct: "A",
+    explanation: "Caching is a prefix match, so stable content must physically precede volatile content. A timestamp interpolated into the system prompt sits at the front of the prefix and invalidates everything after it on every single request — the classic silent cache killer. Dynamic context belongs after the last breakpoint, where it invalidates nothing.",
+  },
+  {
+    id: "t-cr-34",
+    domain: "context-reliability",
+    question: "Which statement about prompt-cache pricing and lifetime is correct?",
+    options: [
+      { letter: "A", text: "Cached content is free to reuse and persists until explicitly deleted", correct: false },
+      { letter: "B", text: "Caching always reduces cost, even for a prompt sent only once", correct: false },
+      { letter: "C", text: "Cache reads cost roughly one-tenth of the base input price; writes carry a premium (~1.25x for the default 5-minute TTL, more for the optional 1-hour TTL)", correct: true },
+      { letter: "D", text: "Reads and writes are billed at the same rate; the benefit is purely lower latency", correct: false },
+    ],
+    correct: "C",
+    explanation: "Reads bill at ~0.1x base input price, while writes carry a premium (~1.25x for the default 5-minute TTL; the 1-hour TTL costs more to write). That premium means caching only pays off when the prefix is actually reused — a one-off request just pays extra, and an entry that expires unread was pure overhead.",
+  },
+  {
+    id: "t-cr-35",
+    domain: "context-reliability",
+    question: "When human-review capacity is limited, how should an extraction pipeline decide which outputs reviewers actually see?",
+    options: [
+      { letter: "A", text: "Review a purely random sample so every document has an equal chance of inspection", correct: false },
+      { letter: "B", text: "Review the most recent outputs first so feedback stays current", correct: false },
+      { letter: "C", text: "Route by risk: prioritize low-confidence extractions and historically weak or high-impact segments, letting high-confidence routine outputs pass with only a thin sampled audit", correct: true },
+      { letter: "D", text: "Review the highest-volume document type first, since it contributes most errors in absolute terms", correct: false },
+    ],
+    correct: "C",
+    explanation: "Fixed reviewer capacity should be spent where errors are most likely (low confidence scores, segments with weak historical accuracy) and most costly (critical fields). Pure random sampling under-represents rare risky segments and burns capacity on routine successes — keep only a small random audit slice to catch calibration drift in the auto-approved stream.",
+  },
 ];

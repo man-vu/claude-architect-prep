@@ -6,18 +6,18 @@ import { allQuestions } from "@/content/questions";
 // study page drilled at least once) — lowering one is a coverage regression.
 const EXPECTED: Record<string, number> = {
   "agent-architecture": 36,
-  "claude-code-config": 33,
+  "claude-code-config": 35,
   "prompt-engineering": 37,
-  "tool-mcp-design": 33,
-  "context-reliability": 31,
+  "tool-mcp-design": 34,
+  "context-reliability": 35,
 };
 
 describe("theory bank", () => {
-  it("keeps full-coverage question counts per domain (170 total)", () => {
+  it("keeps full-coverage question counts per domain (177 total)", () => {
     for (const [d, n] of Object.entries(EXPECTED)) {
       expect(allTheoryQuestions.filter((q) => q.domain === d), d).toHaveLength(n);
     }
-    expect(allTheoryQuestions).toHaveLength(170);
+    expect(allTheoryQuestions).toHaveLength(177);
   });
   it("ids never collide with the scenario bank", () => {
     const examIds = new Set(allQuestions.map((q) => q.id));

@@ -430,4 +430,18 @@ export const toolMcpDesignTheory: TheoryQuestion[] = [
     correct: "B",
     explanation: "\"There's a bug in the auth module\" is not actionable; \"the null check is missing at auth.ts:42\" is. The other listed anti-patterns are reading all files at once, overly broad Glob patterns (e.g., `**/*` across a monorepo), and unsafe Bash — destructive commands like broad deletes, force-pushes, or unscoped rm without confirming scope first.",
   },
+  // t-tm-34 is an original addition covering Edit's replace_all mode.
+  {
+    id: "t-tm-34",
+    domain: "tool-mcp-design",
+    question: "When is `replace_all: true` the right mode for the built-in Edit tool?",
+    options: [
+      { letter: "A", text: "Whenever Edit reports the target string appears more than once, to get past the ambiguity error", correct: false },
+      { letter: "B", text: "When the file is too large to Read before editing", correct: false },
+      { letter: "C", text: "Always — it is faster and never fails on duplicate matches", correct: false },
+      { letter: "D", text: "When the same literal string should genuinely change at every occurrence — e.g. renaming a variable or identifier throughout a file", correct: true },
+    ],
+    correct: "D",
+    explanation: "`replace_all` is for global substitutions where every occurrence is the target, like renames. Using it just to silence a duplicate-match error is the trap: if only one of five identical occurrences should change, `replace_all` corrupts the other four — the reliable fallback there is Read the file, apply the change programmatically using surrounding context, and Write it back.",
+  },
 ];

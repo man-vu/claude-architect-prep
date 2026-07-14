@@ -7,18 +7,18 @@ const EXPECTED: Record<string, number> = {
   "customer-support": 15,
   "code-generation": 15,
   "multi-agent-research": 22,
-  ci: 16,
-  "developer-productivity": 15,
+  ci: 17,
+  "developer-productivity": 16,
   "structured-data-extraction": 19,
   "tool-design": 15,
 };
 
 describe("question bank", () => {
-  it("keeps pinned question counts per scenario (117 total)", () => {
+  it("keeps pinned question counts per scenario (119 total)", () => {
     for (const [s, n] of Object.entries(EXPECTED)) {
       expect(allQuestions.filter((q) => q.scenario === s), s).toHaveLength(n);
     }
-    expect(allQuestions).toHaveLength(117);
+    expect(allQuestions).toHaveLength(119);
   });
   it("every scenario stays exam-eligible with at least 15 questions", () => {
     for (const s of Object.keys(EXPECTED)) {

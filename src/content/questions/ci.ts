@@ -499,5 +499,37 @@ export const ci: Question[] = [
     "correct": "C",
     "explanation": "A fixed, mandatory decomposition that never varies with input is exactly the prompt-chaining case: isolating each review lens in its own sequential pass prevents attention dilution, then a synthesis step merges the outputs. Routing would run only one specialist when every PR needs all three, dynamic decomposition adds nondeterminism to a static workflow, and a single all-in-one prompt is where checks get missed.",
     "domain": "agent-architecture"
+  },
+  // Question 17 is an original addition covering prompt caching.
+  {
+    "id": "ci-17",
+    "scenario": "ci",
+    "situation": "Your CI review bot calls the Messages API directly on every pull request as a blocking pre-merge check. Each request sends the same ~8K-token prefix — a fixed system prompt with review criteria plus identical tool definitions — followed by the PR diff, which differs per run. Cost analysis shows you pay full input price for that identical prefix on every single request. Which change most directly reduces this cost?",
+    "question": "Which change most directly reduces the cost?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "Enable prompt caching by placing a `cache_control` breakpoint at the end of the stable prefix (system prompt and tool definitions), keeping the varying diff after it.",
+        "correct": true
+      },
+      {
+        "letter": "B",
+        "text": "Add an LLM summarization pass that compresses the system prompt before each request.",
+        "correct": false
+      },
+      {
+        "letter": "C",
+        "text": "Move the review calls to the Message Batches API to capture the 50% discount.",
+        "correct": false
+      },
+      {
+        "letter": "D",
+        "text": "Send the system prompt content only on the first request of the day, since the API remembers it for subsequent calls.",
+        "correct": false
+      }
+    ],
+    "correct": "A",
+    "explanation": "An identical prefix followed by varying content is exactly what prompt caching serves: a breakpoint after the stable system prompt and tool definitions lets subsequent runs read the prefix at roughly a tenth of base input price (writes carry a small premium, and the entry stays warm while requests keep arriving within the TTL). Summarizing degrades the review criteria to save less than caching does, the Batch API's up-to-24-hour window is unusable for a blocking pre-merge check, and the API is stateless — an earlier request's system prompt is never remembered; it must be re-sent (and is re-billed) every time.",
+    "domain": "context-reliability"
   }
 ];

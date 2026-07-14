@@ -885,4 +885,36 @@ export const claudeCodeConfigTheory: TheoryQuestion[] = [
     explanation:
       "Without the existing suite in context the generator can't know what's already tested and will propose duplicate scenarios; with it, generation aims at genuinely uncovered behavior.",
   },
+  // t-cc-34..35 are original additions covering parallel work with git worktrees,
+  // an exam topic not yet drilled by the study-page-derived set.
+  {
+    id: "t-cc-34",
+    domain: "claude-code-config",
+    question:
+      "What is the recommended way to run two Claude Code sessions on the same repository in parallel — one building a feature, one fixing an unrelated bug?",
+    options: [
+      { letter: "A", text: "Run both sessions in the same directory on different branches; git isolates their changes automatically", correct: false },
+      { letter: "B", text: "Make a full second clone of the repository and manually sync branches between the two copies", correct: false },
+      { letter: "C", text: "Give each session its own git worktree — a separate working directory checked out to its own branch — so file edits and git state cannot collide", correct: true },
+      { letter: "D", text: "Run both in one directory and instruct each session to touch only its own files", correct: false },
+    ],
+    correct: "C",
+    explanation:
+      "`git worktree add` creates an additional working directory attached to the same repository, each checked out to its own branch — two sessions get isolated files and git state while sharing one object store. Branches do not isolate uncommitted edits in a shared directory (a checkout switches files under the other session's feet), a second clone works but needs manual branch syncing, and \"only touch your own files\" is a probabilistic instruction, not an isolation boundary.",
+  },
+  {
+    id: "t-cc-35",
+    domain: "claude-code-config",
+    question:
+      "Two Claude Code sessions work in separate git worktrees of the same repository. Which constraint should you plan around?",
+    options: [
+      { letter: "A", text: "The same branch cannot be checked out in two worktrees at once — give each session its own branch and merge when the work lands", correct: true },
+      { letter: "B", text: "Commits made in one worktree are invisible to the other until pushed to the remote", correct: false },
+      { letter: "C", text: "Each worktree keeps its own full copy of the repository history, doubling disk usage", correct: false },
+      { letter: "D", text: "Worktrees cannot share a remote, so each must be configured with its own origin", correct: false },
+    ],
+    correct: "A",
+    explanation:
+      "Worktrees share one underlying repository: commits made in one are immediately visible to the other with no remote round-trip, history isn't duplicated, and they share the same remotes. The real constraint is that git refuses to check out a branch that is already checked out in another worktree — so parallel sessions each need their own branch, integrated by merge or rebase afterward.",
+  },
 ];
