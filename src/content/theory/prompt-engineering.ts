@@ -469,4 +469,19 @@ export const promptEngineeringTheory: TheoryQuestion[] = [
     correct: "C",
     explanation: "Asking first is cheaper than building the wrong thing and reworking it, and the questions themselves document the assumptions behind the design.",
   },
+  // Adapted from avidevelops/claude-architect-exam-prep
+  // (https://github.com/avidevelops/claude-architect-exam-prep, CC BY 4.0), condensed.
+  {
+    id: "t-pe-37",
+    domain: "prompt-engineering",
+    question: "What is the primary advantage of enforcing structured JSON output for tool responses and agent outputs in an agentic workflow?",
+    options: [
+      { letter: "A", text: "It makes the LLM's reasoning process deterministic", correct: false },
+      { letter: "B", text: "It guarantees the semantic truth of data fetched from backend APIs", correct: false },
+      { letter: "C", text: "It significantly reduces token consumption compared to prose", correct: false },
+      { letter: "D", text: "Downstream systems and later agent steps can reliably read specific fields directly, without parsing free-form text", correct: true },
+    ],
+    correct: "D",
+    explanation: "Structured output is a stable schema contract: downstream code references exact JSON keys instead of regex-parsing prose, which is what makes chained operations reliable. It does not make reasoning deterministic, does not validate semantic truth, and often costs *more* tokens than prose due to key and bracket overhead.",
+  },
 ];

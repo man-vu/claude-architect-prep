@@ -6,7 +6,7 @@ export type Domain =
 
 export type ScenarioId =
   | "customer-support" | "code-generation" | "multi-agent-research" | "ci"
-  | "developer-productivity" | "structured-data-extraction";
+  | "developer-productivity" | "structured-data-extraction" | "tool-design";
 
 export interface Option { letter: Letter; text: string; correct: boolean }
 

@@ -465,5 +465,132 @@ export const structuredDataExtraction: Question[] = [
     "correct": "B",
     "explanation": "Retry-with-feedback is designed to correct extraction mistakes — it assumes the correct value is derivable from the source and Claude simply got it wrong. When the required information is genuinely absent from the document, retrying (regardless of count, prompt template, or model size) cannot succeed, because there's nothing to extract. The fix is distinguishing \"absent from source\" (which should make the field nullable/optional, not trigger endless retries) from an actual extraction error.",
     "domain": "prompt-engineering"
+  },
+  // Questions 16–19 adapted from "Claude Certified Architect – Foundations: Exam Prep Guide"
+  // by avidevelops — https://github.com/avidevelops/claude-architect-exam-prep (CC BY 4.0).
+  // Adaptations: rewritten into this bank's schema, option order shuffled, explanations condensed.
+  {
+    "id": "structured-data-extraction-16",
+    "scenario": "structured-data-extraction",
+    "situation": "You are about to process 50,000 legacy documents with the Message Batches API. A pilot on 500 documents shows that 18% of them needed two or three rounds of prompt refinement before extracting correctly. What is the most cost-efficient way to scale up?",
+    "question": "What is the most cost-efficient strategy?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "Refine the prompt interactively against a representative sample until first-pass success is high, then submit all 50,000 documents as a batch.",
+        "correct": true
+      },
+      {
+        "letter": "B",
+        "text": "Submit all 50,000 documents immediately, identify the failures at scale, and resubmit them.",
+        "correct": false
+      },
+      {
+        "letter": "C",
+        "text": "Process all 50,000 through the synchronous API so the prompt can be adjusted dynamically per document.",
+        "correct": false
+      },
+      {
+        "letter": "D",
+        "text": "Submit 5,000-document batches and learn the failure modes incrementally in production.",
+        "correct": false
+      }
+    ],
+    "correct": "A",
+    "explanation": "Iterative resubmission at production scale destroys the Batch API's ~50% cost savings — the cheap place to pay for prompt learning is a small representative sample, iterated interactively until failure modes are fixed. Submitting everything immediately (or in 5,000-document waves) pays for that learning at full scale, and the synchronous API forfeits the batch discount entirely.",
+    "domain": "prompt-engineering"
+  },
+  {
+    "id": "structured-data-extraction-17",
+    "scenario": "structured-data-extraction",
+    "situation": "Your extraction service accepts documents continuously and guarantees results within 30 hours of submission. You process them with the Message Batches API, which can take up to 24 hours per batch. Which submission schedule meets the SLA while maximizing cost efficiency?",
+    "question": "Which schedule best meets the SLA at lowest cost?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "Submit one large batch at the end of each day.",
+        "correct": false
+      },
+      {
+        "letter": "B",
+        "text": "Submit batches every 4 hours.",
+        "correct": false
+      },
+      {
+        "letter": "C",
+        "text": "Submit batches every 6 hours.",
+        "correct": true
+      },
+      {
+        "letter": "D",
+        "text": "Switch to the synchronous API to guarantee the SLA.",
+        "correct": false
+      }
+    ],
+    "correct": "C",
+    "explanation": "A request waits at most one interval before submission, so worst-case turnaround = interval + 24h of processing; meeting the 30-hour SLA requires interval ≤ 6h. Six hours is the *longest* interval that still guarantees compliance — the fewest submissions and lowest overhead. Every 4 hours also meets the SLA but submits more batches than necessary, daily batching fails outright (24h + 24h = 48h), and the synchronous API needlessly sacrifices the ~50% batch discount.",
+    "domain": "prompt-engineering"
+  },
+  {
+    "id": "structured-data-extraction-18",
+    "scenario": "structured-data-extraction",
+    "situation": "A nightly batch of 10,000 documents completes with 300 failures (3%), all `context_length_exceeded` errors, each identified in the result file by its `custom_id`. What is the most cost-effective way to process the failures?",
+    "question": "What is the most cost-effective approach?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "Resubmit all 10,000 documents with a smaller chunk size applied across the board.",
+        "correct": false
+      },
+      {
+        "letter": "B",
+        "text": "Extract the 300 failed documents by `custom_id`, split each into smaller chunks, and resubmit only those as a new batch.",
+        "correct": true
+      },
+      {
+        "letter": "C",
+        "text": "Reprocess the 300 failed documents through the synchronous API, which handles longer inputs.",
+        "correct": false
+      },
+      {
+        "letter": "D",
+        "text": "Raise the model's context-window limit in the batch configuration for the next run.",
+        "correct": false
+      }
+    ],
+    "correct": "B",
+    "explanation": "Resubmitting everything pays again for the 97% that already succeeded — the `custom_id` mapping exists precisely to isolate failures. Since the error is `context_length_exceeded`, those documents are too large for a single request and must be chunked before resubmission as a new batch. The synchronous API has the same context limits at roughly double the price, and a model's context window is a fixed constraint, not a configurable setting.",
+    "domain": "prompt-engineering"
+  },
+  {
+    "id": "structured-data-extraction-19",
+    "scenario": "structured-data-extraction",
+    "situation": "An extraction system uses a 12-field JSON schema with detailed tool descriptions totaling ~2,500 tokens, plus a ~1,500-token system prompt, on a model with a 200K-token context window. Documents under 150K tokens extract at 98% accuracy, but documents of 175K–185K tokens drop to 71% — with fields from the final third of the document consistently missing. What is the most likely cause?",
+    "question": "What is the most likely cause?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "Schemas beyond 8–10 fields inherently increase decision complexity and degrade extraction accuracy.",
+        "correct": false
+      },
+      {
+        "letter": "B",
+        "text": "Very long documents trigger the lost-in-the-middle effect, causing mid-document content to be dropped.",
+        "correct": false
+      },
+      {
+        "letter": "C",
+        "text": "The model distributes attention proportionally across the input, so later content receives too small a share.",
+        "correct": false
+      },
+      {
+        "letter": "D",
+        "text": "The tool definitions and system prompt consume part of the fixed context budget, pushing large documents near the absolute limit — where attention over content at the end of the input degrades.",
+        "correct": true
+      }
+    ],
+    "correct": "D",
+    "explanation": "The schema and system prompt share the same fixed token budget as the document, so a 180K-token document puts the total input close to the 200K boundary — and degradation near the absolute limit shows up as the *end* of the input going missing. Lost-in-the-middle would affect the middle, not specifically the final third; the same 12-field schema achieves 98% on shorter documents, ruling out field-count complexity; and proportional attention distribution is a fabricated mechanism.",
+    "domain": "context-reliability"
   }
 ];

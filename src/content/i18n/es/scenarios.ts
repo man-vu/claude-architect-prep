@@ -15,4 +15,5 @@ export const esScenarioLabels: ScenarioLabels = {
   ci: "Claude Code para integración continua",
   "developer-productivity": "Productividad del desarrollador con Claude",
   "structured-data-extraction": "Extracción de datos estructurados",
+  "tool-design": "Diseño de herramientas de agente y MCP",
 };

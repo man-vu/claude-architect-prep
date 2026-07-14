@@ -15,4 +15,5 @@ export const SCENARIOS: Record<ScenarioId, { label: string }> = {
   ci: { label: "Claude Code for Continuous Integration" },
   "developer-productivity": { label: "Developer Productivity with Claude" },
   "structured-data-extraction": { label: "Structured Data Extraction" },
+  "tool-design": { label: "Agent Tool & MCP Design" },
 };

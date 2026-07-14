@@ -465,5 +465,39 @@ export const ci: Question[] = [
     "correct": "C",
     "explanation": "Message Batches API processing can take up to 24 hours with no latency SLA, which is acceptable for overnight technical debt reports but unacceptable for blocking pre-merge checks where developers wait. This matches each workflow to the right API based on latency requirements.",
     "domain": "prompt-engineering"
+  },
+  // Question 16 adapted from "Claude Certified Architect – Foundations: Exam Prep Guide"
+  // by avidevelops — https://github.com/avidevelops/claude-architect-exam-prep (CC BY 4.0).
+  // Adaptations: rewritten into this bank's schema, option order shuffled, explanation condensed.
+  {
+    "id": "ci-16",
+    "scenario": "ci",
+    "situation": "Your CI pipeline reviews every pull request for exactly three aspects: code style, security vulnerabilities, and documentation accuracy. Every PR must be checked for all three, and the required steps never vary with the content of the PR. Which workflow pattern fits best?",
+    "question": "Which workflow pattern fits best?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "A routing agent that classifies each PR and dispatches it to a style, security, or documentation specialist.",
+        "correct": false
+      },
+      {
+        "letter": "B",
+        "text": "Dynamic decomposition, letting a coordinator agent decide case-by-case which aspects each PR needs.",
+        "correct": false
+      },
+      {
+        "letter": "C",
+        "text": "Prompt chaining: separate sequential passes for style, security, and documentation, merged in a final synthesis step.",
+        "correct": true
+      },
+      {
+        "letter": "D",
+        "text": "A single comprehensive prompt instructing one agent to analyze all three aspects simultaneously.",
+        "correct": false
+      }
+    ],
+    "correct": "C",
+    "explanation": "A fixed, mandatory decomposition that never varies with input is exactly the prompt-chaining case: isolating each review lens in its own sequential pass prevents attention dilution, then a synthesis step merges the outputs. Routing would run only one specialist when every PR needs all three, dynamic decomposition adds nondeterminism to a static workflow, and a single all-in-one prompt is where checks get missed.",
+    "domain": "agent-architecture"
   }
 ];
