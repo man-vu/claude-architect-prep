@@ -465,5 +465,37 @@ export const developerProductivity: Question[] = [
     "correct": "C",
     "explanation": "The original Grep results reflect the codebase as it was an hour ago; two new call sites have been added since. Re-running Grep gets a current, accurate list before finalizing — relying on the stale list misses the new sites, and modified-file heuristics or asking the user are indirect substitutes for just checking directly.",
     "domain": "context-reliability"
+  },
+  // Question 16 is an original addition covering parallel sessions via git worktrees.
+  {
+    "id": "developer-productivity-16",
+    "scenario": "developer-productivity",
+    "situation": "You want Claude Code to build a new feature while a second session simultaneously fixes an unrelated production bug in the same repository. Both tasks involve editing files, running tests, and committing. How should the parallel work be set up?",
+    "question": "How should the parallel work be set up?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "Run both sessions in the same working directory on separate branches, letting git keep their changes apart.",
+        "correct": false
+      },
+      {
+        "letter": "B",
+        "text": "Copy the repository folder for the second session and manually copy its changed files back when finished.",
+        "correct": false
+      },
+      {
+        "letter": "C",
+        "text": "Run the bug fix first and the feature afterward in a single session, so nothing can conflict.",
+        "correct": false
+      },
+      {
+        "letter": "D",
+        "text": "Create a separate git worktree — its own directory checked out to its own branch — for each session, and run them independently.",
+        "correct": true
+      }
+    ],
+    "correct": "D",
+    "explanation": "Separate worktrees give each session an isolated working directory and branch backed by the same repository: edits, test runs, and commits proceed in parallel without collisions, and the branches merge normally afterward. Two sessions in one directory fight over a single working tree — branches don't isolate uncommitted edits, and a checkout by one session switches files under the other. Sequential work gives up the parallelism, and a manual folder copy loses git tracking and invites error-prone hand-merging.",
+    "domain": "claude-code-config"
   }
 ];

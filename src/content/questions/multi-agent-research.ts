@@ -465,5 +465,225 @@ export const multiAgentResearch: Question[] = [
     "correct": "D",
     "explanation": "A limited-scope fact-verification tool lets the synthesis agent handle 85% of simple checks directly, eliminating most loops, while preserving the coordinator delegation path for the 15% of complex verifications. This applies least privilege while significantly reducing latency.",
     "domain": "tool-mcp-design"
+  },
+  // Questions 16–22 adapted from "Claude Certified Architect – Foundations: Exam Prep Guide"
+  // by avidevelops — https://github.com/avidevelops/claude-architect-exam-prep (CC BY 4.0).
+  // Adaptations: rewritten into this bank's schema, option order shuffled, explanations condensed.
+  {
+    "id": "multi-agent-research-16",
+    "scenario": "multi-agent-research",
+    "situation": "In production, follow-up summarization requests to your research system take over 40 seconds. Investigation shows that for each follow-up, the coordinator spawns a synthesis subagent and passes it roughly 80K tokens of accumulated findings — findings the coordinator already holds in its own context from orchestrating the original research. What most effectively improves follow-up response time?",
+    "question": "What most effectively improves response time?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "Compress the accumulated findings before passing them to the synthesis subagent.",
+        "correct": false
+      },
+      {
+        "letter": "B",
+        "text": "Cache the synthesis subagent's responses, keyed by the follow-up query.",
+        "correct": false
+      },
+      {
+        "letter": "C",
+        "text": "Have the coordinator answer follow-up summaries directly from its existing context instead of spawning a subagent.",
+        "correct": true
+      },
+      {
+        "letter": "D",
+        "text": "Use `fork_session` to make the subagent spawning itself faster.",
+        "correct": false
+      }
+    ],
+    "correct": "C",
+    "explanation": "Subagents start fresh and inherit none of the coordinator's conversation, so spawning one means re-transferring 80K tokens the coordinator already owns — pure overhead. When the coordinator already holds the needed information, it should do the work itself. Compression and caching merely soften the wrong delegation pattern, and `fork_session` exists for divergent exploration, not spawn latency.",
+    "domain": "agent-architecture"
+  },
+  {
+    "id": "multi-agent-research-17",
+    "scenario": "multi-agent-research",
+    "situation": "The web-search and document-analysis subagents have finished their tasks, and the coordinator must now spawn a synthesis subagent to combine their findings. What is the correct way to provide the synthesis subagent with the information it needs?",
+    "question": "What is the correct approach?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "Let the synthesis subagent read the coordinator's session history directly to gather prior findings.",
+        "correct": false
+      },
+      {
+        "letter": "B",
+        "text": "Embed the complete findings in the synthesis subagent's prompt, using a structured format that separates content from source metadata (claim, evidence, source, date).",
+        "correct": true
+      },
+      {
+        "letter": "C",
+        "text": "Give the synthesis subagent the search and analysis tools so it can regather whatever it needs itself.",
+        "correct": false
+      },
+      {
+        "letter": "D",
+        "text": "Pass the synthesis subagent a short prose summary of what the other agents found.",
+        "correct": false
+      }
+    ],
+    "correct": "B",
+    "explanation": "Subagents start with zero knowledge and cannot inherit the coordinator's history, so every prior finding must be injected explicitly into the spawn prompt — and a structured format preserves the source attribution the synthesis step must cite. Prose summaries collapse away that metadata, and handing over search tools violates scope: a synthesis agent should synthesize, not re-research.",
+    "domain": "agent-architecture"
+  },
+  {
+    "id": "multi-agent-research-18",
+    "scenario": "multi-agent-research",
+    "situation": "Your coordinator gives the web-search subagent exact queries, source priorities, and date filters as step-by-step instructions. In production, the subagent often reports \"insufficient results\" without trying alternatives, degrades on emerging topics, and rarely surfaces unconventional sources. What most improves the subagent's adaptability?",
+    "question": "What most improves adaptability?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "Replace the procedural instructions with goal-oriented prompts stating the research intent and quality criteria (minimum distinct claims, source-credibility standards).",
+        "correct": true
+      },
+      {
+        "letter": "B",
+        "text": "Expand the pre-written query lists so they also cover emerging topics.",
+        "correct": false
+      },
+      {
+        "letter": "C",
+        "text": "Add a fallback instruction to report failure whenever fewer than five results are found.",
+        "correct": false
+      },
+      {
+        "letter": "D",
+        "text": "Use broader, single-word queries to widen the search base.",
+        "correct": false
+      }
+    ],
+    "correct": "A",
+    "explanation": "Step-by-step procedural instructions turn the subagent into a rigid executor that dead-ends when the prescribed path fails. Stating the goal and the quality bar instead gives it authority to form its own queries and adapt when initial approaches come up short. Longer query lists are still procedural — you can't pre-write queries for unknown emerging topics — and generic single-word searches destroy specificity.",
+    "domain": "agent-architecture"
+  },
+  {
+    "id": "multi-agent-research-19",
+    "scenario": "multi-agent-research",
+    "situation": "The document-analysis subagent processes the citations in complex legal cases one at a time; a landmark case citing 12 precedents takes over three minutes. Each citation's analysis is independent of the others. What most effectively reduces this latency?",
+    "question": "What most effectively reduces latency?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "Increase the subagent's context window so it can hold more citations at once.",
+        "correct": false
+      },
+      {
+        "letter": "B",
+        "text": "Move citation processing to the Message Batches API.",
+        "correct": false
+      },
+      {
+        "letter": "C",
+        "text": "Use `fork_session` to accelerate the sequential processing.",
+        "correct": false
+      },
+      {
+        "letter": "D",
+        "text": "Have the coordinator emit all 12 Task tool calls in a single response, so the citation analyses run as parallel subagents.",
+        "correct": true
+      }
+    ],
+    "correct": "D",
+    "explanation": "Sequential processing of independent work is the anti-pattern here: emitting all Task calls in one response turn spawns the analyses in parallel, dropping total latency from the sum of all tasks to the duration of the longest single one. The Batch API has an up-to-24-hour window and would make latency drastically worse, `fork_session` is for divergent exploration, and context size doesn't change the sequential loop.",
+    "domain": "agent-architecture"
+  },
+  {
+    "id": "multi-agent-research-20",
+    "scenario": "multi-agent-research",
+    "situation": "In your pipeline, the web-search agent gathered 120K tokens of raw content, the document-analysis agent distilled 15K tokens of insights, and the synthesis agent produced a 3K-token narrative draft. The coordinator must now hand context to a report-generation agent that writes the final output with proper citations. Which handoff best balances completeness and efficiency?",
+    "question": "Which context-passing strategy is best?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "Pass the 120K tokens of raw content plus all intermediate outputs, so nothing is lost.",
+        "correct": false
+      },
+      {
+        "letter": "B",
+        "text": "Pass only the 3K-token synthesis narrative.",
+        "correct": false
+      },
+      {
+        "letter": "C",
+        "text": "Pass the synthesis narrative along with a lean, structured citation index (claim, source, key quote per citation) and any conflict flags.",
+        "correct": true
+      },
+      {
+        "letter": "D",
+        "text": "Pass the synthesis narrative together with the document-analysis agent's full reasoning chain.",
+        "correct": false
+      }
+    ],
+    "correct": "C",
+    "explanation": "Shipping 135K+ tokens downstream wastes budget and triggers lost-in-the-middle degradation, while the bare narrative leaves the report agent no citation data — it will fabricate sources. The narrative backbone plus a compact structured citation index carries exactly the metadata the final stage needs; upstream reasoning chains are internal to the previous agent and only add noise.",
+    "domain": "context-reliability"
+  },
+  {
+    "id": "multi-agent-research-21",
+    "scenario": "multi-agent-research",
+    "situation": "Your synthesis agent consolidates upstream findings into a prose summary for the report-generation agent. In testing, the final reports make factual claims that cannot be attributed: URLs, publication dates, and document locations disappear during summarization. What is the most effective way to ensure proper source attribution?",
+    "question": "What most effectively preserves attribution?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "Assign a `citation_id` to each source at the earliest agent that touches it, have the synthesis agent write an inline-tagged narrative (e.g., `[src_014]`), and pass a structured citation index alongside the narrative.",
+        "correct": true
+      },
+      {
+        "letter": "B",
+        "text": "Instruct the synthesis agent to \"preserve sources\" when writing its prose output.",
+        "correct": false
+      },
+      {
+        "letter": "C",
+        "text": "Have the report agent infer the likely original sources from the content of each claim.",
+        "correct": false
+      },
+      {
+        "letter": "D",
+        "text": "Require the synthesis agent to re-include the full source text inside its summary.",
+        "correct": false
+      }
+    ],
+    "correct": "A",
+    "explanation": "Prose inherently destroys metadata under token pressure, so the structural fix is separating content from metadata: stable `citation_id` anchors assigned at discovery, an inline-tagged narrative, and a separate structured index that survives every hop. A \"preserve sources\" instruction is probabilistic and still drops fields, the report agent cannot infer sources it never saw without hallucinating, and re-inflating summaries with full text reintroduces the context bloat the pipeline exists to avoid.",
+    "domain": "context-reliability"
+  },
+  {
+    "id": "multi-agent-research-22",
+    "scenario": "multi-agent-research",
+    "situation": "A multi-agent research pipeline crashes after fully processing 12 of 18 documents, with one more document partially analyzed. You need to resume without repeating completed work — and without trusting results that may have gone stale during the crash. What is the best state-management approach?",
+    "question": "What is the best approach to resume?",
+    "options": [
+      {
+        "letter": "A",
+        "text": "Run `--resume` on the crashed session and continue where it stopped.",
+        "correct": false
+      },
+      {
+        "letter": "B",
+        "text": "Use `fork_session` from the crash point to branch a fresh recovery session.",
+        "correct": false
+      },
+      {
+        "letter": "C",
+        "text": "Resume the crashed session and let the agent rediscover what remains by re-reading its own history.",
+        "correct": false
+      },
+      {
+        "letter": "D",
+        "text": "Write the completed findings to a structured checkpoint file, start a fresh session, and inject the checkpoint stating exactly which documents are complete, partial, and pending.",
+        "correct": true
+      }
+    ],
+    "correct": "D",
+    "explanation": "After a mid-execution crash, the session's cached tool results are stale and blindly resuming risks re-processing or corrupted context. Extracting completed work into a durable structured checkpoint and seeding a fresh session — with an explicit map of complete, partial, and pending items — preserves fidelity without redoing work. `fork_session` is for divergent exploration, not failure recovery, and self-rediscovery from a crashed history is exactly the stale-context trap.",
+    "domain": "context-reliability"
   }
 ];
